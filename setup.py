@@ -182,6 +182,7 @@ def create_fig(virus_name):
 
 fig = create_fig("zika")
 
+
 def serve_layout():
     return html.Div([
         html.Div(
@@ -199,11 +200,49 @@ def serve_layout():
                                 html.H1(children=''),
                                 html.H6(children='Dataset'),
                                 dcc.Dropdown(
-                                    id='my-dropdown',
+                                    id='my-dropdown1',
                                     options=[{'label': species[i], 'value': species[i]} for i in range(len(species))],
                                     value='zika',
                                 ),
                                 html.Div(id='output-container'),
+
+                                html.Div(id='controls-container_mumps', children=[
+                                    dcc.Dropdown(
+                                        id='my-dropdown3',
+                                        options=[{'label': i, 'value': i} for i in ['global', 'na']],
+                                        value='global',
+                                    ),
+                                ]),
+
+                                html.Div(id='controls-container_dengue', children=[
+                                    dcc.Dropdown(
+                                        id='my-dropdown4',
+                                        options=[{'label': i, 'value': i} for i in ['all', 'denv1', 'denv2', 'denv3', 'denv4']],
+                                        value='all',
+                                    ),
+                                ]),
+
+                                html.Div(id='controls-container_lassa', children=[
+                                    dcc.Dropdown(
+                                        id='my-dropdown5',
+                                        options=[{'label': i, 'value': i} for i in ['s', 'l']],
+                                        value='s',
+                                    ),
+                                ]),
+
+                                html.Div(id='controls-container_avian', children=[
+                                    dcc.Dropdown(
+                                        id='my-dropdown6',
+                                        options=[{'label': i, 'value': i} for i in ['h7n9']],
+                                        value='h7n9',
+                                    ),
+                                    dcc.Dropdown(
+                                        id='my-dropdown7',
+                                        options=[{'label': i, 'value': i} for i in ['ha', 'mp', 'na', 'ns', 'np', 'pa', 'pb2', 'pb1']],
+                                        value='ha',
+                                    ),
+                                ]),
+
                                 html.H1(children=''),
                                 html.H1(children=''),
                                 html.H6(children='Date Range'),
@@ -253,6 +292,7 @@ def serve_layout():
         )
     ])
 
+
 app.layout = serve_layout()
 
 
@@ -263,7 +303,7 @@ app.css.append_css({
 
 @app.callback(
     dash.dependencies.Output('output-container', 'children'),
-    [dash.dependencies.Input('my-dropdown', 'value')])
+    [dash.dependencies.Input('my-dropdown1', 'value')])
 def update_output(value):
     global virus_name
     virus_name = value
@@ -271,13 +311,59 @@ def update_output(value):
 
 
 @app.callback(
+    dash.dependencies.Output('controls-container_mumps', 'style'),
+    [dash.dependencies.Input('my-dropdown1', 'value')])
+def update_output(value):
+    global virus_name
+    virus_name = value
+    if virus_name == "mumps":
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+
+@app.callback(
+    dash.dependencies.Output('controls-container_dengue', 'style'),
+    [dash.dependencies.Input('my-dropdown1', 'value')])
+def update_output(value):
+    global virus_name
+    virus_name = value
+    if virus_name == "dengue":
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+
+@app.callback(
+    dash.dependencies.Output('controls-container_lassa', 'style'),
+    [dash.dependencies.Input('my-dropdown1', 'value')])
+def update_output(value):
+    global virus_name
+    virus_name = value
+    if virus_name == "lassa":
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+
+@app.callback(
+    dash.dependencies.Output('controls-container_avian', 'style'),
+    [dash.dependencies.Input('my-dropdown1', 'value')])
+def update_output(value):
+    global virus_name
+    virus_name = value
+    if virus_name == "avian":
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+@app.callback(
     dash.dependencies.Output('right-top-graph', 'figure'),
-    [dash.dependencies.Input('my-dropdown', 'value')])
+    [dash.dependencies.Input('my-dropdown1', 'value')])
 def update_fig(value):
     global virus_name
     virus_name = value
     return create_fig(virus_name)
-
 
 
 if __name__ == '__main__':
