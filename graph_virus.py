@@ -3,7 +3,7 @@ import pandas as pd
 
 
 class Virus:
-    species=['avian','dengue','ebola','flu','lassa','measles','mumps','zika']
+    species = ['avian', 'dengue', 'ebola', 'flu', 'lassa', 'measles', 'mumps', 'zika']
 
 
     def get_x_coordinates(tree):
