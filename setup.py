@@ -408,16 +408,16 @@ def update_fig(value, mumps):
     print("gggggggggggggggggggggggggg   "+virus_name)
     print(mumps)
 
-    if mumps == "global":
-        dir = dir+"/global/"
-        tree_file = dir+"nextstrain_"+virus_name+"_"+mumps+"_tree.new"
-        metadata_file = dir+"nextstrain_"+virus_name+"_"+mumps+"_metadata.csv"
-        return create_fig(tree_file, metadata_file)
-    else:
+    if virus_name == "ebola" or virus_name == "zika" or virus_name == "measles":
         tree_file = dir+"nextstrain_"+virus_name+"_tree.new"
         metadata_file = dir+"nextstrain_"+virus_name+"_metadata.csv"
         return create_fig(tree_file, metadata_file)
-
+    elif virus_name == "mumps":
+        if mumps == "global":
+            dir = dir + "/global/"
+            tree_file = dir + "nextstrain_" + virus_name + "_" + mumps + "_tree.new"
+            metadata_file = dir + "nextstrain_" + virus_name + "_" + mumps + "_metadata.csv"
+            return create_fig(tree_file, metadata_file)
     #return create_fig(tree_file, metadata_file)
 
 
