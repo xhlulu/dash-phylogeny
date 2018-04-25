@@ -20,9 +20,13 @@ virus_name = "zika"
 species = ['avian', 'dengue', 'ebola', 'flu', 'lassa', 'measles', 'mumps', 'zika']
 
 
-def create_fig(virus_name):
-    print(virus_name)
-    tree = Virus.read_treefile('nextstrain_'+virus_name+'_tree.new')
+def compute_expensive_data(chemin):
+    dir = dir + chemin
+    return dir
+
+
+def create_fig(tree_file, metadata_file):
+    tree = Virus.read_treefile(tree_file)
     x_coords = Virus.get_x_coordinates(tree)
     y_coords = Virus.get_y_coordinates(tree)
     line_shapes = []
@@ -37,7 +41,7 @@ def create_fig(virus_name):
         Y.append(y_coords[cl])
         text.append(cl.name)
 
-    df = Virus.read_metadata('nextstrain_'+virus_name+'_metadata.csv')
+    df = Virus.read_metadata(metadata_file)
     df.columns
     nb_genome = len(df)
     print(nb_genome)
@@ -179,8 +183,10 @@ def create_fig(virus_name):
     fig = dict(data=[nodes], layout=layout)
     return fig
 
-
-fig = create_fig("zika")
+dir = "data/" + virus_name+ "/"
+tree_file = dir + "nextstrain_" + virus_name +"_tree.new"
+metadata_file = dir + "nextstrain_" + virus_name +"_metadata.csv"
+fig = create_fig(tree_file, metadata_file)
 
 
 def serve_layout():
@@ -208,7 +214,7 @@ def serve_layout():
 
                                 html.Div(id='controls-container_mumps', children=[
                                     dcc.Dropdown(
-                                        id='my-dropdown3',
+                                        id='my-dropdown2',
                                         options=[{'label': i, 'value': i} for i in ['global', 'na']],
                                         value='global',
                                     ),
@@ -216,7 +222,7 @@ def serve_layout():
 
                                 html.Div(id='controls-container_dengue', children=[
                                     dcc.Dropdown(
-                                        id='my-dropdown4',
+                                        id='my-dropdown3',
                                         options=[{'label': i, 'value': i} for i in ['all', 'denv1', 'denv2', 'denv3', 'denv4']],
                                         value='all',
                                     ),
@@ -224,7 +230,7 @@ def serve_layout():
 
                                 html.Div(id='controls-container_lassa', children=[
                                     dcc.Dropdown(
-                                        id='my-dropdown5',
+                                        id='my-dropdown4',
                                         options=[{'label': i, 'value': i} for i in ['s', 'l']],
                                         value='s',
                                     ),
@@ -232,14 +238,34 @@ def serve_layout():
 
                                 html.Div(id='controls-container_avian', children=[
                                     dcc.Dropdown(
-                                        id='my-dropdown6',
+                                        id='my-dropdown5',
                                         options=[{'label': i, 'value': i} for i in ['h7n9']],
                                         value='h7n9',
                                     ),
                                     dcc.Dropdown(
-                                        id='my-dropdown7',
+                                        id='my-dropdown6',
                                         options=[{'label': i, 'value': i} for i in ['ha', 'mp', 'na', 'ns', 'np', 'pa', 'pb2', 'pb1']],
                                         value='ha',
+                                    ),
+                                ]),
+
+                                html.Div(id='controls-container_flu', children=[
+                                    dcc.Dropdown(
+                                        id='my-dropdown7',
+                                        options=[{'label': i, 'value': i} for i in ['h3n2', 'h1n1pdm', 'vic', 'yam']],
+                                        value='h3n2',
+                                    ),
+                                    dcc.Dropdown(
+                                        id='my-dropdown8',
+                                        options=[{'label': i, 'value': i} for i in
+                                                 ['ha', 'na']],
+                                        value='ha',
+                                    ),
+                                    dcc.Dropdown(
+                                        id='my-dropdown9',
+                                        options=[{'label': i, 'value': i} for i in
+                                                 ['2y', '3y', '6y', '12y']],
+                                        value='3y',
                                     ),
                                 ]),
 
@@ -357,15 +383,43 @@ def update_output(value):
     else:
         return {'display': 'none'}
 
+
 @app.callback(
-    dash.dependencies.Output('right-top-graph', 'figure'),
+    dash.dependencies.Output('controls-container_flu', 'style'),
     [dash.dependencies.Input('my-dropdown1', 'value')])
-def update_fig(value):
+def update_output(value):
     global virus_name
     virus_name = value
-    return create_fig(virus_name)
+    if virus_name == "flu":
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+
+@app.callback(
+    dash.dependencies.Output('right-top-graph', 'figure'),
+    [dash.dependencies.Input('my-dropdown1', 'value'),
+     dash.dependencies.Input('my-dropdown2', 'value')])
+def update_fig(value, mumps):
+    global virus_name
+    virus_name = value
+    dir = "data/" + virus_name + "/"
+
+    print("gggggggggggggggggggggggggg   "+virus_name)
+    print(mumps)
+
+    if mumps == "global":
+        dir = dir+"/global/"
+        tree_file = dir+"nextstrain_"+virus_name+"_"+mumps+"_tree.new"
+        metadata_file = dir+"nextstrain_"+virus_name+"_"+mumps+"_metadata.csv"
+        return create_fig(tree_file, metadata_file)
+    else:
+        tree_file = dir+"nextstrain_"+virus_name+"_tree.new"
+        metadata_file = dir+"nextstrain_"+virus_name+"_metadata.csv"
+        return create_fig(tree_file, metadata_file)
+
+    #return create_fig(tree_file, metadata_file)
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True, port=5556)
-
+    app.run_server(debug=True, port=5557)
