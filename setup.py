@@ -417,7 +417,13 @@ def update_fig(value, mumps):
             dir = dir + "/global/"
             tree_file = dir + "nextstrain_" + virus_name + "_" + mumps + "_tree.new"
             metadata_file = dir + "nextstrain_" + virus_name + "_" + mumps + "_metadata.csv"
+            return create_fig(tree_file, metadata_file)    elif virus_name == "mumps":
+        if mumps == "na":
+            dir = dir + "/na/"
+            tree_file = dir + "nextstrain_" + virus_name + "_" + mumps + "_tree.new"
+            metadata_file = dir + "nextstrain_" + virus_name + "_" + mumps + "_metadata.csv"
             return create_fig(tree_file, metadata_file)
+
     #return create_fig(tree_file, metadata_file)
 
 
