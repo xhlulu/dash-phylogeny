@@ -399,8 +399,9 @@ def update_output(value):
 @app.callback(
     dash.dependencies.Output('right-top-graph', 'figure'),
     [dash.dependencies.Input('my-dropdown1', 'value'),
-     dash.dependencies.Input('my-dropdown2', 'value')])
-def update_fig(value, mumps):
+     dash.dependencies.Input('my-dropdown2', 'value'),
+     dash.dependencies.Input('my-dropdown3', 'value')])
+def update_fig(value, mumps, dengue):
     global virus_name
     virus_name = value
     dir = "data/" + virus_name + "/"
@@ -417,13 +418,38 @@ def update_fig(value, mumps):
             dir = dir + "/global/"
             tree_file = dir + "nextstrain_" + virus_name + "_" + mumps + "_tree.new"
             metadata_file = dir + "nextstrain_" + virus_name + "_" + mumps + "_metadata.csv"
-            return create_fig(tree_file, metadata_file)    elif virus_name == "mumps":
+            return create_fig(tree_file, metadata_file)
         if mumps == "na":
             dir = dir + "/na/"
             tree_file = dir + "nextstrain_" + virus_name + "_" + mumps + "_tree.new"
             metadata_file = dir + "nextstrain_" + virus_name + "_" + mumps + "_metadata.csv"
             return create_fig(tree_file, metadata_file)
-
+    elif virus_name == "dengue":
+        if dengue == "all":
+            dir = dir + "/all/"
+            tree_file = dir + "nextstrain_" + virus_name + "_" + dengue + "_tree.new"
+            metadata_file = dir + "nextstrain_" + virus_name + "_" + dengue + "_metadata.csv"
+            return create_fig(tree_file, metadata_file)
+        if dengue == "denv1":
+            dir = dir + "/denv1/"
+            tree_file = dir + "nextstrain_" + virus_name + "_" + dengue + "_tree.new"
+            metadata_file = dir + "nextstrain_" + virus_name + "_" + dengue + "_metadata.csv"
+            return create_fig(tree_file, metadata_file)
+        if dengue == "denv2":
+            dir = dir + "/denv2/"
+            tree_file = dir + "nextstrain_" + virus_name + "_" + dengue + "_tree.new"
+            metadata_file = dir + "nextstrain_" + virus_name + "_" + dengue + "_metadata.csv"
+            return create_fig(tree_file, metadata_file)
+        if dengue == "denv3":
+            dir = dir + "/denv3/"
+            tree_file = dir + "nextstrain_" + virus_name + "_" + mumps + "_tree.new"
+            metadata_file = dir + "nextstrain_" + virus_name + "_" + dengue + "_metadata.csv"
+            return create_fig(tree_file, metadata_file)
+        if dengue == "denv4":
+            dir = dir + "/denv4/"
+            tree_file = dir + "nextstrain_" + virus_name + "_" + dengue + "_tree.new"
+            metadata_file = dir + "nextstrain_" + virus_name + "_" + dengue + "_metadata.csv"
+            return create_fig(tree_file, metadata_file)
     #return create_fig(tree_file, metadata_file)
 
 
