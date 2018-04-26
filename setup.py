@@ -189,6 +189,29 @@ metadata_file = dir + "nextstrain_" + virus_name +"_metadata.csv"
 fig = create_fig(tree_file, metadata_file)
 
 
+def create_paths_file(virus_name, level1="", level2="", level3=""):
+    dir = "data/" + virus_name + "/"
+    if level1 == "" and level2 == "" and level3 == "":
+        tree_file = dir + "nextstrain_" + virus_name + "_tree.new"
+        metadata_file = dir + "nextstrain_" + virus_name + "_metadata.csv"
+        return tree_file, metadata_file
+    elif level2 == "" and level3 == "":
+        dir = dir + "/"+level1+"/"
+        tree_file = dir + "nextstrain_" + virus_name + "_" + level1 + "_tree.new"
+        metadata_file = dir + "nextstrain_" + virus_name + "_" + level1 + "_metadata.csv"
+        return tree_file, metadata_file
+    elif level3 == "":
+        dir = dir + "/" + level1 + "/"+level2+"/"
+        tree_file = dir + "nextstrain_" + virus_name + "_" + level1 + "_" + level2 + "_tree.new"
+        metadata_file = dir + "nextstrain_" + virus_name + "_" + level1 + "_" + level2 + "_metadata.csv"
+        return tree_file, metadata_file
+    else:
+        dir = dir + "/" + level1 + "/"+level2+"/"+level3+"/"
+        tree_file = dir + "nextstrain_" + virus_name + "_" + level1 + "_" + level2 + "_" + level3 + "_tree.new"
+        metadata_file = dir + "nextstrain_" + virus_name + "_" + level1 + "_" + level2 + "_" + level3 + "_metadata.csv"
+        return tree_file, metadata_file
+
+
 def serve_layout():
     return html.Div([
         html.Div(
@@ -400,8 +423,9 @@ def update_output(value):
     dash.dependencies.Output('right-top-graph', 'figure'),
     [dash.dependencies.Input('my-dropdown1', 'value'),
      dash.dependencies.Input('my-dropdown2', 'value'),
-     dash.dependencies.Input('my-dropdown3', 'value')])
-def update_fig(value, mumps, dengue):
+     dash.dependencies.Input('my-dropdown3', 'value'),
+     dash.dependencies.Input('my-dropdown5', 'value'), dash.dependencies.Input('my-dropdown6', 'value')])
+def update_fig(value, mumps, dengue, avian_opt1, avian_opt2):
     global virus_name
     virus_name = value
     dir = "data/" + virus_name + "/"
@@ -450,6 +474,39 @@ def update_fig(value, mumps, dengue):
             tree_file = dir + "nextstrain_" + virus_name + "_" + dengue + "_tree.new"
             metadata_file = dir + "nextstrain_" + virus_name + "_" + dengue + "_metadata.csv"
             return create_fig(tree_file, metadata_file)
+    elif virus_name == "avian":
+        if avian_opt1 == "h7n9":
+            dir = dir + "/h7n9/"
+            if avian_opt2 == "na":
+                dir = dir + "/na/"
+                tree_file = dir + "nextstrain_" + virus_name + "_" + avian_opt1 + "_" + avian_opt2 + "_tree.new"
+                metadata_file = dir + "nextstrain_" + virus_name + "_" + avian_opt1 + "_" + avian_opt2 + "_metadata.csv"
+                return create_fig(tree_file, metadata_file)
+            if avian_opt2 == "mp":
+                dir = dir + "/mp/"
+                tree_file = dir + "nextstrain_" + virus_name + "_" + avian_opt1 + "_" + avian_opt2 + "_tree.new"
+                metadata_file = dir + "nextstrain_" + virus_name + "_" + avian_opt1 + "_" + avian_opt2 + "_metadata.csv"
+                return create_fig(tree_file, metadata_file)
+            if avian_opt2 == "ha":
+                dir = dir + "/ha/"
+                tree_file = dir + "nextstrain_" + virus_name + "_" + avian_opt1 + "_" + avian_opt2 + "_tree.new"
+                metadata_file = dir + "nextstrain_" + virus_name + "_" + avian_opt1 + "_" + avian_opt2 + "_metadata.csv"
+                return create_fig(tree_file, metadata_file)
+            if avian_opt2 == "ns":
+                dir = dir + "/ns/"
+                tree_file = dir + "nextstrain_" + virus_name + "_" + avian_opt1 + "_" + avian_opt2 + "_tree.new"
+                metadata_file = dir + "nextstrain_" + virus_name + "_" + avian_opt1 + "_" + avian_opt2 + "_metadata.csv"
+                return create_fig(tree_file, metadata_file)
+            if avian_opt2 == "np":
+                dir = dir + "/np/"
+                tree_file = dir + "nextstrain_" + virus_name + "_" + avian_opt1 + "_" + avian_opt2 + "_tree.new"
+                metadata_file = dir + "nextstrain_" + virus_name + "_" + avian_opt1 + "_" + avian_opt2 + "_metadata.csv"
+                return create_fig(tree_file, metadata_file)
+            if avian_opt2 == "pa":
+                dir = dir + "/pa/"
+                tree_file = dir + "nextstrain_" + virus_name + "_" + avian_opt1 + "_" + avian_opt2 + "_tree.new"
+                metadata_file = dir + "nextstrain_" + virus_name + "_" + avian_opt1 + "_" + avian_opt2 + "_metadata.csv"
+                return create_fig(tree_file, metadata_file)
     #return create_fig(tree_file, metadata_file)
 
 
