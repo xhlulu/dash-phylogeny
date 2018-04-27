@@ -3,6 +3,7 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from graph_virus import Virus
+from pathlib import Path
 
 from Bio import Phylo
 import pandas as pd
@@ -50,41 +51,57 @@ def create_fig(tree_file, metadata_file):
     intermediate_node_color='rgb(100,100,100)'
 
     NA_color={'Cuba': 'rgb(252, 196, 174)',#from cm.Reds color 0.2, ... 0.8
-     'Dominican Republic': 'rgb(201, 32, 32)',
-     'El Salvador': 'rgb(253, 202, 181)',
-     'Guadeloupe': 'rgb(253, 202, 181)',
-     'Guatemala': 'rgb(252, 190, 167)',
-     'Haiti': 'rgb(252, 145, 114)',
-     'Honduras': 'rgb(239, 66, 49)',
-     'Jamaica': 'rgb(252, 185, 161)',
-     'Martinique': 'rgb(252, 190, 167)',
-     'Mexico': 'rgb(247, 109, 82)',
-     'Nicaragua': 'rgb(249, 121, 92)',
-     'Panama': 'rgb(252, 185, 161)',
-     'Puerto Rico': 'rgb(252, 174, 148)',
-     'Saint Barthelemy': 'rgb(253, 202, 181)',
-     'USA': 'rgb(188, 20, 26)',
-     'Canada': 'rgb(188, 20, 26)',
-     'USVI': 'rgb(206, 36, 34)',}
+                 'Dominican Republic': 'rgb(201, 32, 32)',
+                 'El Salvador': 'rgb(253, 202, 181)',
+                 'Guadeloupe': 'rgb(253, 202, 181)',
+                 'Guatemala': 'rgb(252, 190, 167)',
+                 'Haiti': 'rgb(252, 145, 114)',
+                 'Honduras': 'rgb(239, 66, 49)',
+                 'Jamaica': 'rgb(252, 185, 161)',
+                 'Martinique': 'rgb(252, 190, 167)',
+                 'Mexico': 'rgb(247, 109, 82)',
+                 'Nicaragua': 'rgb(249, 121, 92)',
+                 'Panama': 'rgb(252, 185, 161)',
+                 'Puerto Rico': 'rgb(252, 174, 148)',
+                 'Saint Barthelemy': 'rgb(253, 202, 181)',
+                 'USA': 'rgb(188, 20, 26)',
+                 'Canada': 'rgb(188, 20, 26)',
+                 'USVI': 'rgb(206, 36, 34)'
+              }
 
 
     SAmer_color={'Brazil': 'rgb(21, 127, 59)',# from cm.Greens colors 0.2, 0.4, 0.6, 0.8
-     'Colombia': 'rgb(153, 213, 149)',
-     'Ecuador': 'rgb(208, 237, 202)',
-     'French Guiana': 'rgb(211, 238, 205)',
-     'Peru': 'rgb(208, 237, 202)',
-     'Suriname': 'rgb(206, 236, 200)',
-     'Venezuela': 'rgb(202, 234, 196)'}
+                 'Colombia': 'rgb(153, 213, 149)',
+                 'Ecuador': 'rgb(208, 237, 202)',
+                 'French Guiana': 'rgb(211, 238, 205)',
+                 'Peru': 'rgb(208, 237, 202)',
+                 'Suriname': 'rgb(206, 236, 200)',
+                 'Venezuela': 'rgb(202, 234, 196)',
+                 'Puerto Rico': 'rgb(201, 235, 199)',
+                 'Argentina': 'rgb(203, 225, 185)'
+                 }
 
 
-    SAsia_color={'Singapore': '#0000EE', 'Vietnam': '#1E90FF'}
+    SAsia_color={'Singapore': '#0000EE',
+                 'Vietnam': '#1E90FF',
+                 'Malaysia': '#1E90AF',
+                 'Philippines': '#1E90AE',
+                 'Thailand': '#1E90AB',
+                 'Myanmar': '#1E90AC',
+                 'Cambodia': '#1E90AA',
+                 'Indonesia': '#1E90AA'
+                 }
+
     pl_SAsia=[[0.0, '#1E90FF'], [0.5, '#1E90FF'], [0.5, '#0000EE'], [1.0,'#0000EE' ]]
 
 
     Oceania_color={'American Samoa': 'rgb(209,95,238)',
-     'Fiji': 'rgb(238,130, 238)',
-     'French Polynesia': 'rgb(148,0,211)',
-     'Tonga': 'rgb(238,130, 238)'}
+                     'Fiji': 'rgb(238,130, 238)',
+                     'French Polynesia': 'rgb(148,0,211)',
+                     'Tonga': 'rgb(238,130, 238)',
+                     'Australia': 'rgb(233,125, 235)',
+                     'Micronesia': 'rgb(231,123, 235)'
+                   }
 
 
     China_color={'China': 'rgb(255,185,15'}
@@ -92,19 +109,29 @@ def create_fig(tree_file, metadata_file):
     JapanKorea_color={'Japan': '#fcdd04'}
 
     SubsaharanAfrica_color={'Guinea': 'rgb(209,95,238)',
-     'Liberia': 'rgb(238,130, 238)',
-     'Sierra Leone': 'rgb(148,0,211)'}
+                             'Liberia': 'rgb(238,130, 238)',
+                             'Sierra Leone': 'rgb(148,0,211)',
+                             'Cote D Ivoire': 'rgb(145,0,209)',
+                             'Angola': 'rgb(143,0,207)',
+                             'Seychelles': 'rgb(145,10,217)',
+                             'Comoros': 'rgb(141,5,203)'
+                            }
 
 
     Africa_color={'Sudan': 'rgb(209,95,238)',
-     'Gambia': 'rgb(238,130, 238)'}
+                     'Gambia': 'rgb(238,130, 238)',
+                     'Nigeria': 'rgb(235,135, 233)',
+                     'Mali': 'rgb(235,131, 229)'
+                  }
 
 
     Europe_color={'France': 'rgb(209,95,238)',
-     'Germany': 'rgb(238,130, 238)',
-     'Italy': 'rgb(238,130, 238)',
-     'United Kingdom': 'rgb(238,130, 238)',
-     'Netherlands': 'rgb(148,0,211)'}
+                 'Germany': 'rgb(238,130, 238)',
+                 'Italy': 'rgb(238,130, 238)',
+                 'United Kingdom': 'rgb(238,130, 238)',
+                 'Netherlands': 'rgb(148,0,211)',
+                 'Spain': 'rgb(141,7,221)'
+                  }
 
     country = []
     region = []
@@ -183,12 +210,8 @@ def create_fig(tree_file, metadata_file):
     fig = dict(data=[nodes], layout=layout)
     return fig
 
-dir = "data/" + virus_name+ "/"
-tree_file = dir + "nextstrain_" + virus_name +"_tree.new"
-metadata_file = dir + "nextstrain_" + virus_name +"_metadata.csv"
-fig = create_fig(tree_file, metadata_file)
 
-
+#TO DO validation file and directory exist
 def create_paths_file(virus_name, level1="", level2="", level3=""):
     dir = "data/" + virus_name + "/"
     if level1 == "" and level2 == "" and level3 == "":
@@ -210,6 +233,10 @@ def create_paths_file(virus_name, level1="", level2="", level3=""):
         tree_file = dir + "nextstrain_" + virus_name + "_" + level1 + "_" + level2 + "_" + level3 + "_tree.new"
         metadata_file = dir + "nextstrain_" + virus_name + "_" + level1 + "_" + level2 + "_" + level3 + "_metadata.csv"
         return tree_file, metadata_file
+
+
+tree_file, metadata_file = create_paths_file(virus_name, level1="", level2="", level3="")
+fig = create_fig(tree_file, metadata_file)
 
 
 def serve_layout():
@@ -424,90 +451,28 @@ def update_output(value):
     [dash.dependencies.Input('my-dropdown1', 'value'),
      dash.dependencies.Input('my-dropdown2', 'value'),
      dash.dependencies.Input('my-dropdown3', 'value'),
-     dash.dependencies.Input('my-dropdown5', 'value'), dash.dependencies.Input('my-dropdown6', 'value')])
-def update_fig(value, mumps, dengue, avian_opt1, avian_opt2):
-    global virus_name
-    virus_name = value
-    dir = "data/" + virus_name + "/"
-
-    print("gggggggggggggggggggggggggg   "+virus_name)
-    print(mumps)
-
+     dash.dependencies.Input('my-dropdown4', 'value'),
+     dash.dependencies.Input('my-dropdown5', 'value'), dash.dependencies.Input('my-dropdown6', 'value'),
+     dash.dependencies.Input('my-dropdown7', 'value'), dash.dependencies.Input('my-dropdown8', 'value'), dash.dependencies.Input('my-dropdown9', 'value')])
+def update_fig(value, mumps, dengue, lassa, avian_opt1, avian_opt2, flu_opt1, flu_opt2, flu_opt3):
     if virus_name == "ebola" or virus_name == "zika" or virus_name == "measles":
-        tree_file = dir+"nextstrain_"+virus_name+"_tree.new"
-        metadata_file = dir+"nextstrain_"+virus_name+"_metadata.csv"
+        tree_file, metadata_file = create_paths_file(virus_name, level1="", level2="", level3="")
         return create_fig(tree_file, metadata_file)
     elif virus_name == "mumps":
-        if mumps == "global":
-            dir = dir + "/global/"
-            tree_file = dir + "nextstrain_" + virus_name + "_" + mumps + "_tree.new"
-            metadata_file = dir + "nextstrain_" + virus_name + "_" + mumps + "_metadata.csv"
-            return create_fig(tree_file, metadata_file)
-        if mumps == "na":
-            dir = dir + "/na/"
-            tree_file = dir + "nextstrain_" + virus_name + "_" + mumps + "_tree.new"
-            metadata_file = dir + "nextstrain_" + virus_name + "_" + mumps + "_metadata.csv"
-            return create_fig(tree_file, metadata_file)
+        tree_file, metadata_file = create_paths_file(virus_name, level1=mumps, level2="", level3="")
+        return create_fig(tree_file, metadata_file)
     elif virus_name == "dengue":
-        if dengue == "all":
-            dir = dir + "/all/"
-            tree_file = dir + "nextstrain_" + virus_name + "_" + dengue + "_tree.new"
-            metadata_file = dir + "nextstrain_" + virus_name + "_" + dengue + "_metadata.csv"
-            return create_fig(tree_file, metadata_file)
-        if dengue == "denv1":
-            dir = dir + "/denv1/"
-            tree_file = dir + "nextstrain_" + virus_name + "_" + dengue + "_tree.new"
-            metadata_file = dir + "nextstrain_" + virus_name + "_" + dengue + "_metadata.csv"
-            return create_fig(tree_file, metadata_file)
-        if dengue == "denv2":
-            dir = dir + "/denv2/"
-            tree_file = dir + "nextstrain_" + virus_name + "_" + dengue + "_tree.new"
-            metadata_file = dir + "nextstrain_" + virus_name + "_" + dengue + "_metadata.csv"
-            return create_fig(tree_file, metadata_file)
-        if dengue == "denv3":
-            dir = dir + "/denv3/"
-            tree_file = dir + "nextstrain_" + virus_name + "_" + mumps + "_tree.new"
-            metadata_file = dir + "nextstrain_" + virus_name + "_" + dengue + "_metadata.csv"
-            return create_fig(tree_file, metadata_file)
-        if dengue == "denv4":
-            dir = dir + "/denv4/"
-            tree_file = dir + "nextstrain_" + virus_name + "_" + dengue + "_tree.new"
-            metadata_file = dir + "nextstrain_" + virus_name + "_" + dengue + "_metadata.csv"
-            return create_fig(tree_file, metadata_file)
+        tree_file, metadata_file = create_paths_file(virus_name, level1=dengue, level2="", level3="")
+        return create_fig(tree_file, metadata_file)
+    elif virus_name == "lassa":
+        tree_file, metadata_file = create_paths_file(virus_name, level1=lassa, level2="", level3="")
+        return create_fig(tree_file, metadata_file)
     elif virus_name == "avian":
-        if avian_opt1 == "h7n9":
-            dir = dir + "/h7n9/"
-            if avian_opt2 == "na":
-                dir = dir + "/na/"
-                tree_file = dir + "nextstrain_" + virus_name + "_" + avian_opt1 + "_" + avian_opt2 + "_tree.new"
-                metadata_file = dir + "nextstrain_" + virus_name + "_" + avian_opt1 + "_" + avian_opt2 + "_metadata.csv"
-                return create_fig(tree_file, metadata_file)
-            if avian_opt2 == "mp":
-                dir = dir + "/mp/"
-                tree_file = dir + "nextstrain_" + virus_name + "_" + avian_opt1 + "_" + avian_opt2 + "_tree.new"
-                metadata_file = dir + "nextstrain_" + virus_name + "_" + avian_opt1 + "_" + avian_opt2 + "_metadata.csv"
-                return create_fig(tree_file, metadata_file)
-            if avian_opt2 == "ha":
-                dir = dir + "/ha/"
-                tree_file = dir + "nextstrain_" + virus_name + "_" + avian_opt1 + "_" + avian_opt2 + "_tree.new"
-                metadata_file = dir + "nextstrain_" + virus_name + "_" + avian_opt1 + "_" + avian_opt2 + "_metadata.csv"
-                return create_fig(tree_file, metadata_file)
-            if avian_opt2 == "ns":
-                dir = dir + "/ns/"
-                tree_file = dir + "nextstrain_" + virus_name + "_" + avian_opt1 + "_" + avian_opt2 + "_tree.new"
-                metadata_file = dir + "nextstrain_" + virus_name + "_" + avian_opt1 + "_" + avian_opt2 + "_metadata.csv"
-                return create_fig(tree_file, metadata_file)
-            if avian_opt2 == "np":
-                dir = dir + "/np/"
-                tree_file = dir + "nextstrain_" + virus_name + "_" + avian_opt1 + "_" + avian_opt2 + "_tree.new"
-                metadata_file = dir + "nextstrain_" + virus_name + "_" + avian_opt1 + "_" + avian_opt2 + "_metadata.csv"
-                return create_fig(tree_file, metadata_file)
-            if avian_opt2 == "pa":
-                dir = dir + "/pa/"
-                tree_file = dir + "nextstrain_" + virus_name + "_" + avian_opt1 + "_" + avian_opt2 + "_tree.new"
-                metadata_file = dir + "nextstrain_" + virus_name + "_" + avian_opt1 + "_" + avian_opt2 + "_metadata.csv"
-                return create_fig(tree_file, metadata_file)
-    #return create_fig(tree_file, metadata_file)
+        tree_file, metadata_file = create_paths_file(virus_name, level1=avian_opt1, level2=avian_opt2, level3="")
+        return create_fig(tree_file, metadata_file)
+    elif virus_name == "flu":
+        tree_file, metadata_file = create_paths_file(virus_name, level1=flu_opt2, level2=flu_opt2, level3=flu_opt3)
+        return create_fig(tree_file, metadata_file)
 
 
 if __name__ == '__main__':
