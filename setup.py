@@ -25,6 +25,64 @@ def compute_expensive_data(chemin):
     dir = dir + chemin
     return dir
 
+def create_map():
+    df_airports = pd.read_csv(
+        'https://raw.githubusercontent.com/plotly/datasets/master/2011_february_us_airport_traffic.csv')
+    df_airports.head()
+
+    df_flight_paths = pd.read_csv(
+        'https://raw.githubusercontent.com/plotly/datasets/master/2011_february_aa_flight_paths.csv')
+    df_flight_paths.head()
+
+    airports = [dict(
+        type='scattergeo',
+        locationmode='USA-states',
+        lon=df_airports['long'],
+        lat=df_airports['lat'],
+        hoverinfo='text',
+        text=df_airports['airport'],
+        mode='markers',
+        marker=dict(
+            size=2,
+            color='rgb(255, 0, 0)',
+            line=dict(
+                width=3,
+                color='rgba(68, 68, 68, 0)'
+            )
+        ))]
+
+    flight_paths = []
+    for i in range(len(df_flight_paths)):
+        flight_paths.append(
+            dict(
+                type='scattergeo',
+                locationmode='USA-states',
+                lon=[df_flight_paths['start_lon'][i], df_flight_paths['end_lon'][i]],
+                lat=[df_flight_paths['start_lat'][i], df_flight_paths['end_lat'][i]],
+                mode='lines',
+                line=dict(
+                    width=1,
+                    color='red',
+                ),
+                opacity=float(df_flight_paths['cnt'][i]) / float(df_flight_paths['cnt'].max()),
+            )
+        )
+
+    layout = dict(
+        title='Feb. 2011 American Airline flight paths<br>(Hover for airport names)',
+        showlegend=False,
+        geo=dict(
+            scope='north america',
+            projection=dict(type='azimuthal equal area'),
+            showland=True,
+            landcolor='rgb(243, 243, 243)',
+            countrycolor='rgb(204, 204, 204)',
+        ),
+    )
+
+    fig_map = dict(data=flight_paths + airports, layout=layout)
+    return fig_map
+
 
 def create_fig(tree_file, metadata_file):
     tree = Virus.read_treefile(tree_file)
@@ -237,7 +295,7 @@ def create_paths_file(virus_name, level1="", level2="", level3=""):
 
 tree_file, metadata_file = create_paths_file(virus_name, level1="", level2="", level3="")
 fig = create_fig(tree_file, metadata_file)
-
+fig_map = create_map()
 
 def serve_layout():
     return html.Div([
@@ -248,7 +306,7 @@ def serve_layout():
                     className="one columns"
                 ),
                 html.Div(
-                    className="three columns",
+                    className="two columns",
                     children=[
                         html.Div(
                             children=html.Div([
@@ -341,7 +399,7 @@ def serve_layout():
                     ]
                 ),
                 html.Div(
-                    className="eight columns",
+                    className="five columns",
                     children=html.Div([
                         dcc.Graph(
                             id='right-top-graph',
@@ -360,8 +418,17 @@ def serve_layout():
                                     'margin': {'l': 10, 'b': 20, 't': 0, 'r': 0}
                                 }
                             }
-                        ),
+                        )
 
+                    ])
+                ),
+                html.Div(
+                    className="four columns",
+                    children=html.Div([
+                        dcc.Graph(
+                            id='right-mid-graph',
+                            figure=fig_map
+                        )
                     ])
                 )
             ]
