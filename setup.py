@@ -3,6 +3,8 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from graph_virus import Virus
+from geopy.geocoders import Nominatim
+
 from pathlib import Path
 
 from Bio import Phylo
@@ -24,6 +26,7 @@ species = ['avian', 'dengue', 'ebola', 'flu', 'lassa', 'measles', 'mumps', 'zika
 def compute_expensive_data(chemin):
     dir = dir + chemin
     return dir
+
 
 def create_map():
     df_airports = pd.read_csv(
@@ -84,6 +87,66 @@ def create_map():
     return fig_map
 
 
+def get_lon_lat(city):
+    '''
+    Example:
+    location = geolocator.geocode("Chicago Illinois")
+    return:
+    Chicago, Cook County, Illinois, United States of America
+    location.address    location.altitude   location.latitude   location.longitude  location.point      location.raw
+    '''
+    geolocator = Nominatim()
+    location = geolocator.geocode(city)
+    return location.longitude, location.latitude
+
+
+def create_map_bubble():
+    df = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/2014_us_cities.csv')
+    df.head()
+
+    df['text'] = df['name'] + '<br>Population ' + (df['pop'] / 1e6).astype(str) + ' million'
+    limits = [(0, 2), (3, 10), (11, 20), (21, 50), (50, 3000)]
+    colors = ["rgb(0,116,217)", "rgb(255,65,54)", "rgb(133,20,75)", "rgb(255,133,27)", "lightgrey"]
+    cities = []
+    scale = 5000
+
+    for i in range(len(limits)):
+        lim = limits[i]
+        df_sub = df[lim[0]:lim[1]]
+        city = dict(
+            type='scattergeo',
+            locationmode='USA-states',
+            lon=df_sub['lon'],
+            lat=df_sub['lat'],
+            text=df_sub['text'],
+            marker=dict(
+                size=df_sub['pop'] / scale,
+                color=colors[i],
+                line=dict(width=0.5, color='rgb(40,40,40)'),
+                sizemode='area'
+            ),
+            name='{0} - {1}'.format(lim[0], lim[1]))
+        cities.append(city)
+
+    layout = dict(
+        title='2018 Dispersion of virus<br>(Click legend to toggle traces)',
+        showlegend=True,
+        geo=dict(
+            scope='usa',
+            projection=dict(type='albers usa'),
+            showland=True,
+            landcolor='rgb(217, 217, 217)',
+            subunitwidth=1,
+            countrywidth=1,
+            subunitcolor="rgb(255, 255, 255)",
+            countrycolor="rgb(255, 255, 255)"
+        ),
+    )
+
+    fig_map_bubble = dict(data=cities, layout=layout)
+    return fig_map_bubble
+
+
 def create_fig(tree_file, metadata_file):
     tree = Virus.read_treefile(tree_file)
     x_coords = Virus.get_x_coordinates(tree)
@@ -106,25 +169,31 @@ def create_fig(tree_file, metadata_file):
     print(nb_genome)
 
     graph_title = Virus.create_title(virus_name, nb_genome)
-    intermediate_node_color='rgb(100,100,100)'
+    intermediate_node_color ='rgb(100,100,100)'
 
     NA_color={'Cuba': 'rgb(252, 196, 174)',#from cm.Reds color 0.2, ... 0.8
-                 'Dominican Republic': 'rgb(201, 32, 32)',
-                 'El Salvador': 'rgb(253, 202, 181)',
-                 'Guadeloupe': 'rgb(253, 202, 181)',
-                 'Guatemala': 'rgb(252, 190, 167)',
-                 'Haiti': 'rgb(252, 145, 114)',
-                 'Honduras': 'rgb(239, 66, 49)',
-                 'Jamaica': 'rgb(252, 185, 161)',
-                 'Martinique': 'rgb(252, 190, 167)',
-                 'Mexico': 'rgb(247, 109, 82)',
-                 'Nicaragua': 'rgb(249, 121, 92)',
-                 'Panama': 'rgb(252, 185, 161)',
-                 'Puerto Rico': 'rgb(252, 174, 148)',
-                 'Saint Barthelemy': 'rgb(253, 202, 181)',
-                 'USA': 'rgb(188, 20, 26)',
-                 'Canada': 'rgb(188, 20, 26)',
-                 'USVI': 'rgb(206, 36, 34)'
+              'Dominican Republic': 'rgb(201, 32, 32)',
+              'El Salvador': 'rgb(253, 202, 181)',
+              'Guadeloupe': 'rgb(253, 202, 181)',
+              'Guatemala': 'rgb(252, 190, 167)',
+              'Haiti': 'rgb(252, 145, 114)',
+              'Honduras': 'rgb(239, 66, 49)',
+              'Jamaica': 'rgb(252, 185, 161)',
+              'Martinique': 'rgb(252, 190, 167)',
+              'Mexico': 'rgb(247, 109, 82)',
+              'Nicaragua': 'rgb(249, 121, 92)',
+              'Panama': 'rgb(252, 185, 161)',
+              'Puerto Rico': 'rgb(252, 174, 148)',
+              'Saint Barthelemy': 'rgb(253, 202, 181)',
+              'USA': 'rgb(188, 20, 26)',
+              'Canada': 'rgb(188, 20, 26)',
+              'USVI': 'rgb(206, 36, 34)',
+              'Dominica': 'rgb(209, 39, 37)',
+              'Trinidad And Tobago': 'rgb(201, 19, 51)',
+              'Belize': 'rgb(241, 49, 61)',
+              'Grenada': 'rgb(222, 32, 38)',
+              'Costa Rica': 'rgb(211, 12, 48)',
+              'Bermuda': 'rgb(231, 53, 24)'
               }
 
 
@@ -136,7 +205,11 @@ def create_fig(tree_file, metadata_file):
                  'Suriname': 'rgb(206, 236, 200)',
                  'Venezuela': 'rgb(202, 234, 196)',
                  'Puerto Rico': 'rgb(201, 235, 199)',
-                 'Argentina': 'rgb(203, 225, 185)'
+                 'Argentina': 'rgb(203, 225, 185)',
+                 'Bolivia': 'rgb(217, 197, 165)',
+                 'Paraguay': 'rgb(154, 217, 195)',
+                 'Chile': 'rgb(231, 85, 168)',
+                 'Aruba': 'rgb(191, 35, 128)'
                  }
 
 
@@ -147,18 +220,32 @@ def create_fig(tree_file, metadata_file):
                  'Thailand': '#1E90AB',
                  'Myanmar': '#1E90AC',
                  'Cambodia': '#1E90AA',
-                 'Indonesia': '#1E90AA'
+                 'Indonesia': '#1E90AA',
+                 'Brunei': '#1E90BA',
+                 'Laos': '#1E90BF'
                  }
 
-    pl_SAsia=[[0.0, '#1E90FF'], [0.5, '#1E90FF'], [0.5, '#0000EE'], [1.0,'#0000EE' ]]
+    pl_SAsia=[[0.0, '#1E90FF'], [0.5, '#1E90FF'], [0.5, '#0000EE'], [1.0, '#0000EE']]
 
 
     Oceania_color={'American Samoa': 'rgb(209,95,238)',
-                     'Fiji': 'rgb(238,130, 238)',
-                     'French Polynesia': 'rgb(148,0,211)',
-                     'Tonga': 'rgb(238,130, 238)',
-                     'Australia': 'rgb(233,125, 235)',
-                     'Micronesia': 'rgb(231,123, 235)'
+                   'Fiji': 'rgb(238,130, 238)',
+                   'French Polynesia': 'rgb(148,0,211)',
+                   'Tonga': 'rgb(238,130, 238)',
+                   'Australia': 'rgb(233,125, 235)',
+                   'Micronesia': 'rgb(231,123, 235)',
+                   'New Caledonia': 'rgb(229,119, 233)',
+                   'Marshall Islands': 'rgb(227,117, 231)',
+                   'Guam': 'rgb(267,137, 251)',
+                   'Papua New Guinea': 'rgb(277,187, 291)',
+                   'Solomon Islands': 'rgb(22,167, 251)',
+                   'Cook Islands': 'rgb(20,187, 211)',
+                   'Samoa': 'rgb(50,127, 221)',
+                   'Nauru': 'rgb(34, 92, 98)',
+                   'Palau': 'rgb(214, 132, 238)',
+                   'Vanuatu': 'rgb(252, 42, 128)',
+                   'Niue': 'rgb(272, 52, 158)',
+                   'New Zealand': 'rgb(242, 71, 133)'
                    }
 
 
@@ -167,28 +254,83 @@ def create_fig(tree_file, metadata_file):
     JapanKorea_color={'Japan': '#fcdd04'}
 
     SubsaharanAfrica_color={'Guinea': 'rgb(209,95,238)',
-                             'Liberia': 'rgb(238,130, 238)',
-                             'Sierra Leone': 'rgb(148,0,211)',
-                             'Cote D Ivoire': 'rgb(145,0,209)',
-                             'Angola': 'rgb(143,0,207)',
-                             'Seychelles': 'rgb(145,10,217)',
-                             'Comoros': 'rgb(141,5,203)'
+                            'Liberia': 'rgb(238,130, 238)',
+                            'Sierra Leone': 'rgb(148,0,211)',
+                            'Cote D Ivoire': 'rgb(145,0,209)',
+                            'Angola': 'rgb(143,0,207)',
+                            'Seychelles': 'rgb(145,10,217)',
+                            'Comoros': 'rgb(141,5,203)',
+                            'Madagascar': 'rgb(233,60, 281)',
+                            'Eritrea': 'rgb(202, 122, 118)',
+                            'Somalia': 'rgb(115,51,222)',
+                            'Djibouti': 'rgb(203,57, 211)',
+                            'Burkina Faso': 'rgb(141,21,239)',
+                            'Ghana': 'rgb(102,57,232)',
+                            'Tanzania': 'rgb(217,37, 291)',
+                            'Mozambique': 'rgb(213,17, 231)',
+                            'Senegal': 'rgb(231,133, 219)',
+                            'Togo': 'rgb(121,21,198)',
                             }
 
 
     Africa_color={'Sudan': 'rgb(209,95,238)',
-                     'Gambia': 'rgb(238,130, 238)',
-                     'Nigeria': 'rgb(235,135, 233)',
-                     'Mali': 'rgb(235,131, 229)'
+                  'Gambia': 'rgb(238,130, 238)',
+                  'Nigeria': 'rgb(235,135, 233)',
+                  'Mali': 'rgb(235,131, 229)',
+                  'Senegal': 'rgb(231,133, 219)',
+                  'Cote D Ivoire': 'rgb(145,0,209)',
+                  'Burkina Faso': 'rgb(141,21,239)',
+                  'Seychelles': 'rgb(145,10,217)',
+                  'Somalia': 'rgb(115,51,222)',
+                  'Ghana': 'rgb(102,57,232)',
+                  'Tanzania': 'rgb(217,37, 291)',
+                  'Mozambique': 'rgb(213,17, 231)',
+                  'Djibouti': 'rgb(203,57, 211)',
+                  'Madagascar': 'rgb(233,60, 281)',
+                  'Comoros': 'rgb(141,5,203)',
+                  'Togo': 'rgb(121,21,198)',
+                  'Angola': 'rgb(212, 92, 138)',
+                  'Eritrea': 'rgb(202, 122, 118)',
+                  'Guinea': 'rgb(209,95,238)',
+                  'Sierra Leone': 'rgb(148,0,211)',
+                  'Liberia': 'rgb(238,130, 238)',
+                  'Tunisia': 'rgb(228,99, 298)',
+                  'Cameroon': 'rgb(207,78, 199)',
+                  'South Africa': 'rgb(222,22, 222)',
+                  'Congo': 'rgb(231,41, 172)',
+                  'Algeria': 'rgb(237,35, 168)',
+                  'Morocco': 'rgb(223,27, 165)',
+                  'Zambia': 'rgb(218,62, 265)',
+                  'Kenya': 'rgb(118,2, 215)',
+                  'Uganda': 'rgb(128,35, 265)',
+                  'Egypt': 'rgb(143,52, 265)',
+                  'Ethiopia': 'rgb(206,36, 265)',
+                  'Niger': 'rgb(121,52, 187)',
+                  'Mayotte': 'rgb(101,32,165)',
+                  'Rwanda': 'rgb(325,25,144)'
                   }
 
 
     Europe_color={'France': 'rgb(209,95,238)',
-                 'Germany': 'rgb(238,130, 238)',
-                 'Italy': 'rgb(238,130, 238)',
-                 'United Kingdom': 'rgb(238,130, 238)',
-                 'Netherlands': 'rgb(148,0,211)',
-                 'Spain': 'rgb(141,7,221)'
+                  'Germany': 'rgb(238,130, 238)',
+                  'Italy': 'rgb(238,130, 238)',
+                  'United Kingdom': 'rgb(238,130, 238)',
+                  'Netherlands': 'rgb(148,0,211)',
+                  'Spain': 'rgb(141,7,221)',
+                  'Portugal': 'rgb(139,11,219)',
+                  'Ireland': 'rgb(128,15,279)',
+                  'Slovakia': 'rgb(121,25,209)',
+                  'Romania': 'rgb(171,45,197)',
+                  'Sweden': 'rgb(135,96,208)',
+                  'Norway': 'rgb(138,56,213)',
+                  'Slovenia': 'rgb(138,45,265)',
+                  'Denmark': 'rgb(258,25,265)',
+                  'Iceland': 'rgb(138,7,185)',
+                  'Ukraine': 'rgb(298,65,265)',
+                  'Czech Republic': 'rgb(226,96,128)',
+                  'Albania': 'rgb(111,20,201)',
+                  'Greece': 'rgb(108,63,265)',
+                  'Latvia': 'rgb(121,35,299)'
                   }
 
     country = []
@@ -247,14 +389,14 @@ def create_fig(tree_file, metadata_file):
                hoverinfo='')
 
     layout = dict(title=graph_title,
-                font=dict(family='Balto',size=14),
+                font=dict(family='Balto', size=14),
                 width=1000,
                 height=3000,
-                autosize=False,
-                showlegend=False,
+                autosize=True,
+                showlegend=True,
                 xaxis=dict(showline=True,
                            zeroline=False,
-                           showgrid=False,
+                           showgrid=True, #To visualize the vertical lines
                            ticklen=4,
                            showticklabels=True,
                            title='branch length'),
@@ -264,6 +406,7 @@ def create_fig(tree_file, metadata_file):
                 plot_bgcolor='rgb(250,250,250)',
                 margin=dict(l=10)
                )
+
 
     fig = dict(data=[nodes], layout=layout)
     return fig
@@ -296,6 +439,7 @@ def create_paths_file(virus_name, level1="", level2="", level3=""):
 tree_file, metadata_file = create_paths_file(virus_name, level1="", level2="", level3="")
 fig = create_fig(tree_file, metadata_file)
 fig_map = create_map()
+fig_map_bubble = create_map_bubble()
 
 def serve_layout():
     return html.Div([
@@ -393,7 +537,15 @@ def serve_layout():
                                         10: '10 °F'
                                     },
                                     value=[3, 7.65]
-                                )
+                                ),
+                                html.H1(children=''),
+                                html.H1(children=''),
+                                html.H6(children='Color by'),
+                                dcc.Dropdown(
+                                    id='my-dropdown10',
+                                    options=[{'label': i, 'value': i} for i in ['genetype', 'country', 'region', 'authors', 'data']],
+                                    value='country',
+                                ),
                             ])
                         )
                     ]
@@ -422,15 +574,17 @@ def serve_layout():
 
                     ])
                 ),
+
                 html.Div(
                     className="four columns",
                     children=html.Div([
                         dcc.Graph(
                             id='right-mid-graph',
-                            figure=fig_map
+                            figure=fig_map_bubble
                         )
                     ])
                 )
+
             ]
         )
     ])
@@ -538,7 +692,7 @@ def update_fig(value, mumps, dengue, lassa, avian_opt1, avian_opt2, flu_opt1, fl
         tree_file, metadata_file = create_paths_file(virus_name, level1=avian_opt1, level2=avian_opt2, level3="")
         return create_fig(tree_file, metadata_file)
     elif virus_name == "flu":
-        tree_file, metadata_file = create_paths_file(virus_name, level1=flu_opt2, level2=flu_opt2, level3=flu_opt3)
+        tree_file, metadata_file = create_paths_file(virus_name, level1=flu_opt1, level2=flu_opt2, level3=flu_opt3)
         return create_fig(tree_file, metadata_file)
 
 
