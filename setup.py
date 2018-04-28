@@ -166,7 +166,6 @@ def create_fig(tree_file, metadata_file):
     df = Virus.read_metadata(metadata_file)
     df.columns
     nb_genome = len(df)
-    print(nb_genome)
 
     graph_title = Virus.create_title(virus_name, nb_genome)
     intermediate_node_color ='rgb(100,100,100)'
@@ -336,8 +335,8 @@ def create_fig(tree_file, metadata_file):
     country = []
     region = []
     color = [intermediate_node_color] * len(X)
-    print(set(list(df['Region'])))
-    print(set(list(df['Country'])))
+    #print(set(list(df['Region'])))
+    #print(set(list(df['Country'])))
 
     for k, strain in enumerate(df['Strain']):
 
@@ -371,7 +370,7 @@ def create_fig(tree_file, metadata_file):
         else:
             pass
 
-    print(graph_title)
+    #print(graph_title)
     axis = dict(showline=False,
               zeroline=False,
               showgrid=False,
@@ -379,15 +378,33 @@ def create_fig(tree_file, metadata_file):
               title='' #y title
               )
 
-    nodes = dict(type='scatter',
+    label_legend = set(list(df['Country']))
+
+    nodes = []
+    #print(label_legend)
+    for elt in label_legend:
+        node = dict(type='scatter',
+                   x=X,
+                   y=Y,
+                   mode='markers',
+                   marker=dict(color=color,
+                               size=5),
+                   text=text, #vignet information of each node
+                   hoverinfo='',
+                   name=elt
+                   )
+        nodes.append(node)
+    """
+    nodes2 = dict(type='scatter',
                x=X,
                y=Y,
                mode='markers',
                marker=dict(color=color,
                            size=5),
                text=text, #vignet information of each node
-               hoverinfo='')
-
+               hoverinfo='',
+               name="Canada")
+    """
     layout = dict(title=graph_title,
                 font=dict(family='Balto', size=14),
                 width=1000,
@@ -408,7 +425,7 @@ def create_fig(tree_file, metadata_file):
                )
 
 
-    fig = dict(data=[nodes], layout=layout)
+    fig = dict(data= nodes, layout=layout)
     return fig
 
 
@@ -438,7 +455,6 @@ def create_paths_file(virus_name, level1="", level2="", level3=""):
 
 tree_file, metadata_file = create_paths_file(virus_name, level1="", level2="", level3="")
 fig = create_fig(tree_file, metadata_file)
-fig_map = create_map()
 fig_map_bubble = create_map_bubble()
 
 def serve_layout():
@@ -546,6 +562,15 @@ def serve_layout():
                                     options=[{'label': i, 'value': i} for i in ['genetype', 'country', 'region', 'authors', 'data']],
                                     value='country',
                                 ),
+                                html.Div(
+                                    className="four columns",
+                                    children=html.Div([
+                                        dcc.Graph(
+                                            id='right-mid-graph',
+                                            figure=fig_map_bubble
+                                        )
+                                    ])
+                                ),
                             ])
                         )
                     ]
@@ -574,17 +599,6 @@ def serve_layout():
 
                     ])
                 ),
-
-                html.Div(
-                    className="four columns",
-                    children=html.Div([
-                        dcc.Graph(
-                            id='right-mid-graph',
-                            figure=fig_map_bubble
-                        )
-                    ])
-                )
-
             ]
         )
     ])
@@ -602,8 +616,6 @@ app.css.append_css({
     dash.dependencies.Output('output-container', 'children'),
     [dash.dependencies.Input('my-dropdown1', 'value')])
 def update_output(value):
-    global virus_name
-    virus_name = value
     return 'You have selected "{}" virus'.format(value)
 
 
@@ -611,8 +623,6 @@ def update_output(value):
     dash.dependencies.Output('controls-container_mumps', 'style'),
     [dash.dependencies.Input('my-dropdown1', 'value')])
 def update_output(value):
-    global virus_name
-    virus_name = value
     if virus_name == "mumps":
         return {'display': 'block'}
     else:
@@ -623,8 +633,6 @@ def update_output(value):
     dash.dependencies.Output('controls-container_dengue', 'style'),
     [dash.dependencies.Input('my-dropdown1', 'value')])
 def update_output(value):
-    global virus_name
-    virus_name = value
     if virus_name == "dengue":
         return {'display': 'block'}
     else:
@@ -635,8 +643,6 @@ def update_output(value):
     dash.dependencies.Output('controls-container_lassa', 'style'),
     [dash.dependencies.Input('my-dropdown1', 'value')])
 def update_output(value):
-    global virus_name
-    virus_name = value
     if virus_name == "lassa":
         return {'display': 'block'}
     else:
@@ -647,8 +653,6 @@ def update_output(value):
     dash.dependencies.Output('controls-container_avian', 'style'),
     [dash.dependencies.Input('my-dropdown1', 'value')])
 def update_output(value):
-    global virus_name
-    virus_name = value
     if virus_name == "avian":
         return {'display': 'block'}
     else:
@@ -659,8 +663,6 @@ def update_output(value):
     dash.dependencies.Output('controls-container_flu', 'style'),
     [dash.dependencies.Input('my-dropdown1', 'value')])
 def update_output(value):
-    global virus_name
-    virus_name = value
     if virus_name == "flu":
         return {'display': 'block'}
     else:
