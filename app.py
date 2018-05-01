@@ -2,9 +2,10 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-
+import csv
 from Bio import Phylo
 import pandas as pd
+import numpy as np
 from geopy.geocoders import Nominatim
 virus_name = "zika"
 species = ['avian', 'dengue', 'ebola', 'flu', 'lassa', 'measles', 'mumps', 'zika']
@@ -190,6 +191,32 @@ def get_lon_lat(city):
     return location.longitude, location.latitude
 
 
+def get_lon(city):
+    '''
+    Example:
+    location = geolocator.geocode("Chicago Illinois")
+    return:
+    Chicago, Cook County, Illinois, United States of America
+    location.address    location.altitude   location.latitude   location.longitude  location.point      location.raw
+    '''
+    geolocator = Nominatim()
+    location = geolocator.geocode(city)
+    return location.longitude
+
+
+def get_lat(city):
+    '''
+    Example:
+    location = geolocator.geocode("Chicago Illinois")
+    return:
+    Chicago, Cook County, Illinois, United States of America
+    location.address    location.altitude   location.latitude   location.longitude  location.point      location.raw
+    '''
+    geolocator = Nominatim()
+    location = geolocator.geocode(city)
+    return location.latitude
+
+
 def create_map_bubble():
     df = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/2014_us_cities.csv')
     df.head()
@@ -254,6 +281,14 @@ def create_fig(tree_file, metadata_file):
         text.append(cl.name)
 
     df = read_metadata(metadata_file)
+    data_metadata_stat_csv = df.groupby('Country')['Strain'].count()
+
+    for index_val, series_val in data_metadata_stat_csv.iteritems():
+        print(index_val, series_val, get_lon(index_val), get_lat(index_val))
+        #np.savetxt(metadata_file+"_stat.csv", (index_val, series_val, get_lon(index_val), get_lat(index_val)), delimiter=',')
+
+    #print(data_metadata_stat_csv)
+    #print(type(data_metadata_stat_csv))
     df.columns
     nb_genome = len(df)
 
@@ -337,7 +372,6 @@ def create_fig(tree_file, metadata_file):
                    'New Zealand': 'rgb(242, 71, 133)'
                    }
 
-
     China_color={'China': 'rgb(255,185,15'}
 
     JapanKorea_color={'Japan': '#fcdd04'}
@@ -360,7 +394,6 @@ def create_fig(tree_file, metadata_file):
                             'Senegal': 'rgb(231,133, 219)',
                             'Togo': 'rgb(121,21,198)',
                             }
-
 
     Africa_color={'Sudan': 'rgb(209,95,238)',
                   'Gambia': 'rgb(238,130, 238)',
@@ -470,7 +503,7 @@ def create_fig(tree_file, metadata_file):
 
     label_legend = set(list(df['Country']))
     nodes = []
-    print("label_legend");
+    print("label_legend")
     print(label_legend)
     for elt in label_legend:
         node = dict(type='scatter',
@@ -503,7 +536,6 @@ def create_fig(tree_file, metadata_file):
                 plot_bgcolor='rgb(250,250,250)',
                 margin=dict(l=10)
                )
-
 
     fig = dict(data=nodes, layout=layout)
     return fig
