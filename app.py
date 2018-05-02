@@ -218,21 +218,20 @@ def get_lat(city):
 
 
 def create_map_bubble():
-    df = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/2014_us_cities.csv')
+    df = pd.read_csv('2014_us_cities2.csv')
     df.head()
 
-    df['text'] = df['name'] + '<br>Population ' + (df['pop'] / 1e6).astype(str) + ' million'
+    df['text'] = df['name'] + '<br>Virus proportion ' + (df['pop']).astype(str)
     limits = [(0, 2), (3, 10), (11, 20), (21, 50), (50, 3000)]
     colors = ["rgb(0,116,217)", "rgb(255,65,54)", "rgb(133,20,75)", "rgb(255,133,27)", "lightgrey"]
     cities = []
-    scale = 5000
+    scale = 1
 
     for i in range(len(limits)):
         lim = limits[i]
         df_sub = df[lim[0]:lim[1]]
         city = dict(
             type='scattergeo',
-            locationmode='USA-states',
             lon=df_sub['lon'],
             lat=df_sub['lat'],
             text=df_sub['text'],
@@ -244,13 +243,12 @@ def create_map_bubble():
             ),
             name='{0} - {1}'.format(lim[0], lim[1]))
         cities.append(city)
+        print(cities)
 
     layout = dict(
         title='2018 Dispersion of virus<br>(Click legend to toggle traces)',
         showlegend=True,
         geo=dict(
-            scope='usa',
-            projection=dict(type='albers usa'),
             showland=True,
             landcolor='rgb(217, 217, 217)',
             subunitwidth=1,
@@ -283,9 +281,8 @@ def create_fig(tree_file, metadata_file):
     df = read_metadata(metadata_file)
     data_metadata_stat_csv = df.groupby('Country')['Strain'].count()
 
-    for index_val, series_val in data_metadata_stat_csv.iteritems():
-        print(index_val, series_val, get_lon(index_val), get_lat(index_val))
-        #np.savetxt(metadata_file+"_stat.csv", (index_val, series_val, get_lon(index_val), get_lat(index_val)), delimiter=',')
+    #for index_val, series_val in data_metadata_stat_csv.iteritems():
+        #print(index_val, series_val, get_lon(index_val), get_lat(index_val))
 
     #print(data_metadata_stat_csv)
     #print(type(data_metadata_stat_csv))
@@ -429,7 +426,8 @@ def create_fig(tree_file, metadata_file):
                   'Ethiopia': 'rgb(206,36, 265)',
                   'Niger': 'rgb(121,52, 187)',
                   'Mayotte': 'rgb(101,32,165)',
-                  'Rwanda': 'rgb(325,25,144)'
+                  'Rwanda': 'rgb(325,25,144)',
+                  'Gabon': 'rgb(319,7,197)'
                   }
 
 
