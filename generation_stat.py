@@ -47,13 +47,14 @@ def get_lat(city):
     return location.latitude
 
 
-def create_fig(metadata_file):
+def create_fig(path, filename):
+    metadata_file = path + "/" + filename
     df = read_metadata(metadata_file)
     data_metadata_stat_csv = df.groupby('Country')['Strain'].count()
 
-    statFile = open(metadata_file + "_stat.csv", "w")
+    statFile = open(path + "/stat_" + filename, "w")
 
-    line = "name, pop, lat, lon\n"
+    line = "name,pop,lat,lon\n"
     # print(line)
     statFile.write(line)
 
@@ -77,4 +78,4 @@ for path, dirs, files in os.walk(folder_path):
             print(filename)
             # print(p)
             # os.chdir(path)
-            create_fig(path+"/"+filename)
+            create_fig(path, filename)
