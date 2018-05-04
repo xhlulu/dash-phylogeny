@@ -7,8 +7,16 @@ from Bio import Phylo
 import pandas as pd
 import numpy as np
 from geopy.geocoders import Nominatim
+import base64
+
+
 virus_name = "zika"
 species = ['avian', 'dengue', 'ebola', 'flu', 'lassa', 'measles', 'mumps', 'zika']
+static_image_route = ''
+
+
+image_filename = 'forum_logo.png'
+encoded_image = base64.b64encode(open(image_filename, 'rb').read())
 
 
 def get_x_coordinates(tree):
@@ -243,13 +251,13 @@ def create_map_bubble():
             ),
             name='{0} - {1}'.format(lim[0], lim[1]))
         cities.append(city)
-        print(cities)
 
     layout = dict(
         title='2018 Dispersion of virus<br>(Click legend to toggle traces)',
         showlegend=True,
         geo=dict(
             showland=True,
+            scope='north america',
             landcolor='rgb(217, 217, 217)',
             subunitwidth=1,
             countrywidth=1,
@@ -282,7 +290,7 @@ def create_fig(tree_file, metadata_file):
     data_metadata_stat_csv = df.groupby('Country')['Strain'].count()
 
     #for index_val, series_val in data_metadata_stat_csv.iteritems():
-        #print(index_val, series_val, get_lon(index_val), get_lat(index_val))
+        #print(index_val, ",", series_val, ",", get_lat(index_val), ",", get_lon(index_val))
 
     #print(data_metadata_stat_csv)
     #print(type(data_metadata_stat_csv))
@@ -491,7 +499,6 @@ def create_fig(tree_file, metadata_file):
         else:
             pass
 
-    print(graph_title)
     axis = dict(showline=False,
               zeroline=False,
               showgrid=False,
@@ -501,8 +508,7 @@ def create_fig(tree_file, metadata_file):
 
     label_legend = set(list(df['Country']))
     nodes = []
-    print("label_legend")
-    print(label_legend)
+
     for elt in label_legend:
         node = dict(type='scatter',
                    x=X,
@@ -690,6 +696,8 @@ def serve_layout():
                             id='right-top-graph',
                             figure=fig
                         ),
+                        html.Img(id='image',
+                                 src='data:image/png;base64,{}'.format(encoded_image)),
                         dcc.Graph(
                             id='right-bottom-graph',
                             figure={
@@ -734,18 +742,14 @@ app.css.append_css({
 @app.callback(
     dash.dependencies.Output('output-container', 'children'),
     [dash.dependencies.Input('my-dropdown1', 'value')])
-def update_output(value):
-    global virus_name
-    virus_name = value
-    return 'You have selected "{}" virus'.format(value)
+def update_output(virus_name):
+    return 'You have selected "{}" virus'.format(virus_name)
 
 
 @app.callback(
     dash.dependencies.Output('controls-container_mumps', 'style'),
     [dash.dependencies.Input('my-dropdown1', 'value')])
-def update_output(value):
-    global virus_name
-    virus_name = value
+def update_output(virus_name):
     if virus_name == "mumps":
         return {'display': 'block'}
     else:
@@ -755,9 +759,7 @@ def update_output(value):
 @app.callback(
     dash.dependencies.Output('controls-container_dengue', 'style'),
     [dash.dependencies.Input('my-dropdown1', 'value')])
-def update_output(value):
-    global virus_name
-    virus_name = value
+def update_output(virus_name):
     if virus_name == "dengue":
         return {'display': 'block'}
     else:
@@ -767,9 +769,7 @@ def update_output(value):
 @app.callback(
     dash.dependencies.Output('controls-container_lassa', 'style'),
     [dash.dependencies.Input('my-dropdown1', 'value')])
-def update_output(value):
-    global virus_name
-    virus_name = value
+def update_output(virus_name):
     if virus_name == "lassa":
         return {'display': 'block'}
     else:
@@ -779,9 +779,7 @@ def update_output(value):
 @app.callback(
     dash.dependencies.Output('controls-container_avian', 'style'),
     [dash.dependencies.Input('my-dropdown1', 'value')])
-def update_output(value):
-    global virus_name
-    virus_name = value
+def update_output(virus_name):
     if virus_name == "avian":
         return {'display': 'block'}
     else:
@@ -791,9 +789,7 @@ def update_output(value):
 @app.callback(
     dash.dependencies.Output('controls-container_flu', 'style'),
     [dash.dependencies.Input('my-dropdown1', 'value')])
-def update_output(value):
-    global virus_name
-    virus_name = value
+def update_output(virus_name):
     if virus_name == "flu":
         return {'display': 'block'}
     else:
@@ -808,7 +804,20 @@ def update_output(value):
      dash.dependencies.Input('my-dropdown4', 'value'),
      dash.dependencies.Input('my-dropdown5', 'value'), dash.dependencies.Input('my-dropdown6', 'value'),
      dash.dependencies.Input('my-dropdown7', 'value'), dash.dependencies.Input('my-dropdown8', 'value'), dash.dependencies.Input('my-dropdown9', 'value')])
-def update_fig(value, mumps, dengue, lassa, avian_opt1, avian_opt2, flu_opt1, flu_opt2, flu_opt3):
+def _update_fig(virus_name, mumps, dengue, lassa, avian_opt1, avian_opt2, flu_opt1, flu_opt2, flu_opt3):
+    '''
+    I use the underscore in front of this function to suggest that it should not be called. In fact, only changes to the dropdown values should trigger its execution.
+    :param virus_name:
+    :param mumps:
+    :param dengue:
+    :param lassa:
+    :param avian_opt1:
+    :param avian_opt2:
+    :param flu_opt1:
+    :param flu_opt2:
+    :param flu_opt3:
+    :return: phylogeny tree
+    '''
     if virus_name == "ebola" or virus_name == "zika" or virus_name == "measles":
         tree_file, metadata_file = create_paths_file(virus_name, level1="", level2="", level3="")
         return create_fig(tree_file, metadata_file)
