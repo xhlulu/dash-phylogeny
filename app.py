@@ -2,12 +2,12 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-import csv
 from Bio import Phylo
 import pandas as pd
-import numpy as np
 from geopy.geocoders import Nominatim
 import base64
+from IPython.display import Image
+
 
 
 virus_name = "zika"
@@ -580,8 +580,8 @@ virus_name = "zika"
 species = ['avian', 'dengue', 'ebola', 'flu', 'lassa', 'measles', 'mumps', 'zika']
 tree_file, metadata_file, metadata_file_stat = create_paths_file(virus_name, level1="", level2="", level3="")
 
-print(tree_file)
-fig = create_fig(virus_name, tree_file, metadata_file)
+#fig = create_fig(virus_name, tree_file, metadata_file)
+fig = Image(image_filename)
 tree_fig[tree_file] = fig
 
 #fig_map = Virus.create_map()
@@ -589,148 +589,139 @@ fig_map_bubble = create_map_bubble(metadata_file_stat)
 
 def serve_layout():
     return html.Div([
-        html.Div(
-            className="row",
-            children=[
-                html.Div(
-                    className="one columns"
-                ),
-                html.Div(
-                    className="four columns",
-                    children=[
-                        html.Div(
-                            children=html.Div([
-                                html.H1(children='Criterion'),
-                                html.H1(children=''),
-                                html.H6(children='Dataset'),
+            html.Div(
+                className="one columns"
+            ),
+            html.Div(
+                className="three columns",
+                children=[
+                    html.Div(
+                        children=html.Div([
+                            html.H1(children='Criterion'),
+                            html.H1(children=''),
+                            html.H6(children='Dataset'),
+                            dcc.Dropdown(
+                                id='my-dropdown1',
+                                options=[{'label': species[i], 'value': species[i]} for i in range(len(species))],
+                                value='zika',
+                            ),
+                            html.Div(id='output-container'),
+
+                            html.Div(id='controls-container_mumps', children=[
                                 dcc.Dropdown(
-                                    id='my-dropdown1',
-                                    options=[{'label': species[i], 'value': species[i]} for i in range(len(species))],
-                                    value='zika',
+                                    id='my-dropdown2',
+                                    options=[{'label': i, 'value': i} for i in ['global', 'na']],
+                                    value='global',
                                 ),
-                                html.Div(id='output-container'),
+                            ]),
 
-                                html.Div(id='controls-container_mumps', children=[
-                                    dcc.Dropdown(
-                                        id='my-dropdown2',
-                                        options=[{'label': i, 'value': i} for i in ['global', 'na']],
-                                        value='global',
-                                    ),
-                                ]),
-
-                                html.Div(id='controls-container_dengue', children=[
-                                    dcc.Dropdown(
-                                        id='my-dropdown3',
-                                        options=[{'label': i, 'value': i} for i in ['all', 'denv1', 'denv2', 'denv3', 'denv4']],
-                                        value='all',
-                                    ),
-                                ]),
-
-                                html.Div(id='controls-container_lassa', children=[
-                                    dcc.Dropdown(
-                                        id='my-dropdown4',
-                                        options=[{'label': i, 'value': i} for i in ['s', 'l']],
-                                        value='s',
-                                    ),
-                                ]),
-
-                                html.Div(id='controls-container_avian', children=[
-                                    dcc.Dropdown(
-                                        id='my-dropdown5',
-                                        options=[{'label': i, 'value': i} for i in ['h7n9']],
-                                        value='h7n9',
-                                    ),
-                                    dcc.Dropdown(
-                                        id='my-dropdown6',
-                                        options=[{'label': i, 'value': i} for i in ['ha', 'mp', 'na', 'ns', 'np', 'pa', 'pb2', 'pb1']],
-                                        value='ha',
-                                    ),
-                                ]),
-
-                                html.Div(id='controls-container_flu', children=[
-                                    dcc.Dropdown(
-                                        id='my-dropdown7',
-                                        options=[{'label': i, 'value': i} for i in ['h3n2', 'h1n1pdm', 'vic', 'yam']],
-                                        value='h3n2',
-                                    ),
-                                    dcc.Dropdown(
-                                        id='my-dropdown8',
-                                        options=[{'label': i, 'value': i} for i in
-                                                 ['ha', 'na']],
-                                        value='ha',
-                                    ),
-                                    dcc.Dropdown(
-                                        id='my-dropdown9',
-                                        options=[{'label': i, 'value': i} for i in
-                                                 ['2y', '3y', '6y', '12y']],
-                                        value='3y',
-                                    ),
-                                ]),
-
-                                html.H1(children=''),
-                                html.H1(children=''),
-                                html.H6(children='Date Range'),
-                                dcc.RangeSlider(
-                                    count=1,
-                                    min=0,
-                                    max=10,
-                                    step=0.5,
-                                    marks={
-                                        0: '0 °F',
-                                        3: '3 °F',
-                                        5: '5 °F',
-                                        7.65: '7.65 °F',
-                                        10: '10 °F'
-                                    },
-                                    value=[3, 7.65]
-                                ),
-                                html.H1(children=''),
-                                html.H1(children=''),
-                                html.H1(children=''),
-                                html.H6(children='Color by'),
+                            html.Div(id='controls-container_dengue', children=[
                                 dcc.Dropdown(
-                                    id='my-dropdown10',
-                                    options=[{'label': i, 'value': i} for i in ['genetype', 'country', 'region', 'authors', 'data']],
-                                    value='country',
+                                    id='my-dropdown3',
+                                    options=[{'label': i, 'value': i} for i in ['all', 'denv1', 'denv2', 'denv3', 'denv4']],
+                                    value='all',
                                 ),
+                            ]),
 
-                                dcc.Graph(
-                                    id='right-mid-graph',
-                                    figure=fig_map_bubble
-                                )
-                            ])
-                        )
-                    ]
-                ),
-                html.Div(
-                    className="seven columns",
-                    children=html.Div([
-                        dcc.Graph(
-                            id='right-top-graph',
-                            figure=fig
-                        ),
-                        html.Img(id='image',
-                                 src='data:image/png;base64,{}'.format(encoded_image)),
-                        dcc.Graph(
-                            id='right-bottom-graph',
-                            figure={
-                                'data': [{
-                                    'x': [1, 2, 3],
-                                    'y': [3, 1, 2],
-                                    'type': 'bar'
-                                }],
-                                'layout': {
-                                    'height': 400,
-                                    'margin': {'l': 10, 'b': 20, 't': 0, 'r': 0}
-                                }
+                            html.Div(id='controls-container_lassa', children=[
+                                dcc.Dropdown(
+                                    id='my-dropdown4',
+                                    options=[{'label': i, 'value': i} for i in ['s', 'l']],
+                                    value='s',
+                                ),
+                            ]),
+
+                            html.Div(id='controls-container_avian', children=[
+                                dcc.Dropdown(
+                                    id='my-dropdown5',
+                                    options=[{'label': i, 'value': i} for i in ['h7n9']],
+                                    value='h7n9',
+                                ),
+                                dcc.Dropdown(
+                                    id='my-dropdown6',
+                                    options=[{'label': i, 'value': i} for i in ['ha', 'mp', 'na', 'ns', 'np', 'pa', 'pb2', 'pb1']],
+                                    value='ha',
+                                ),
+                            ]),
+
+                            html.Div(id='controls-container_flu', children=[
+                                dcc.Dropdown(
+                                    id='my-dropdown7',
+                                    options=[{'label': i, 'value': i} for i in ['h3n2', 'h1n1pdm', 'vic', 'yam']],
+                                    value='h3n2',
+                                ),
+                                dcc.Dropdown(
+                                    id='my-dropdown8',
+                                    options=[{'label': i, 'value': i} for i in
+                                             ['ha', 'na']],
+                                    value='ha',
+                                ),
+                                dcc.Dropdown(
+                                    id='my-dropdown9',
+                                    options=[{'label': i, 'value': i} for i in
+                                             ['2y', '3y', '6y', '12y']],
+                                    value='3y',
+                                ),
+                            ]),
+
+                            html.H1(children=''),
+                            html.H1(children=''),
+                            html.H6(children='Date Range'),
+                            dcc.RangeSlider(
+                                count=1,
+                                min=0,
+                                max=10,
+                                step=0.5,
+                                marks={
+                                    0: '0 °F',
+                                    3: '3 °F',
+                                    5: '5 °F',
+                                    7.65: '7.65 °F',
+                                    10: '10 °F'
+                                },
+                                value=[3, 7.65]
+                            ),
+                            html.H1(children=''),
+                            html.H1(children=''),
+                            html.H1(children=''),
+                            html.H6(children='Color by'),
+                            dcc.Dropdown(
+                                id='my-dropdown10',
+                                options=[{'label': i, 'value': i} for i in ['genetype', 'country', 'region', 'authors', 'data']],
+                                value='country',
+                            ),
+
+                            dcc.Graph(
+                                id='right-mid-graph',
+                                figure=fig_map_bubble
+                            )
+                        ])
+                    )
+                ]
+            ),
+            html.Div(
+                className="seven columns",
+                children=html.Div([
+                    html.Div(id='right-top-graph'),
+                    html.Img(id='image',
+                             src='data:image/png;base64,{}'.format(encoded_image)),
+                    dcc.Graph(
+                        id='right-bottom-graph',
+                        figure={
+                            'data': [{
+                                'x': [1, 2, 3],
+                                'y': [3, 1, 2],
+                                'type': 'bar'
+                            }],
+                            'layout': {
+                                'height': 400,
+                                'margin': {'l': 10, 'b': 20, 't': 0, 'r': 0}
                             }
-                        )
+                        }
+                    )
 
-                    ])
-                ),
-
-            ]
-        )
+                ])
+            )
     ])
 
 
@@ -800,7 +791,7 @@ def _update_output(virus_name):
 
 
 @app.callback(
-    dash.dependencies.Output('right-top-graph', 'figure'),
+    dash.dependencies.Output('right-top-graph', 'children'),
     [dash.dependencies.Input('my-dropdown1', 'value'),
      dash.dependencies.Input('my-dropdown2', 'value'),
      dash.dependencies.Input('my-dropdown3', 'value'),
@@ -823,22 +814,26 @@ def _update_fig(virus_name, mumps, dengue, lassa, avian_opt1, avian_opt2, flu_op
     '''
     if virus_name == "ebola" or virus_name == "zika" or virus_name == "measles":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1="", level2="", level3="")
-        return create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
+        fig = create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
     elif virus_name == "mumps":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=mumps, level2="", level3="")
-        return create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
+        fig = create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
     elif virus_name == "dengue":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat = create_paths_file(virus_name, level1=dengue, level2="", level3="")
-        return create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
+        fig = create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
     elif virus_name == "lassa":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=lassa, level2="", level3="")
-        return create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
+        fig = create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
     elif virus_name == "avian":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=avian_opt1, level2=avian_opt2, level3="")
-        return create_fig(virus_name, tree_file, metadata_file)
+        fig = create_fig(virus_name, tree_file, metadata_file)
     elif virus_name == "flu":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=flu_opt1, level2=flu_opt2, level3=flu_opt3)
-        return create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
+        fig = create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
+    return dcc.Graph(
+                    id='top-graph',
+                    figure=fig
+                ),
 
 
 @app.callback(
