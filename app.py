@@ -6,18 +6,14 @@ from Bio import Phylo
 import pandas as pd
 from geopy.geocoders import Nominatim
 import base64
-from IPython.display import Image
 
 
 
 virus_name = "zika"
 species = ['avian', 'dengue', 'ebola', 'flu', 'lassa', 'measles', 'mumps', 'zika']
-static_image_route = ''
-
 tree_fig = {}
 
-image_filename = 'img/forum_logo.png'
-encoded_image = base64.b64encode(open(image_filename, 'rb').read())
+
 
 
 def get_x_coordinates(tree):
@@ -580,11 +576,11 @@ virus_name = "zika"
 species = ['avian', 'dengue', 'ebola', 'flu', 'lassa', 'measles', 'mumps', 'zika']
 tree_file, metadata_file, metadata_file_stat = create_paths_file(virus_name, level1="", level2="", level3="")
 
-#fig = create_fig(virus_name, tree_file, metadata_file)
-fig = Image(image_filename)
+fig = create_fig(virus_name, tree_file, metadata_file)
 tree_fig[tree_file] = fig
 
-#fig_map = Virus.create_map()
+
+#fig_map = create_map()
 fig_map_bubble = create_map_bubble(metadata_file_stat)
 
 def serve_layout():
@@ -703,8 +699,6 @@ def serve_layout():
                 className="seven columns",
                 children=html.Div([
                     html.Div(id='right-top-graph'),
-                    html.Img(id='image',
-                             src='data:image/png;base64,{}'.format(encoded_image)),
                     dcc.Graph(
                         id='right-bottom-graph',
                         figure={
@@ -719,6 +713,15 @@ def serve_layout():
                             }
                         }
                     )
+
+                ])
+            ),
+            html.Div(
+                className="one columns",
+                children=html.Div([
+                    html.Img(id='image',
+                             src="http://www.info2.uqam.ca/~makarenkov_v/images_trex/t-rex-t.gif",
+                             )
 
                 ])
             )
@@ -814,26 +817,62 @@ def _update_fig(virus_name, mumps, dengue, lassa, avian_opt1, avian_opt2, flu_op
     '''
     if virus_name == "ebola" or virus_name == "zika" or virus_name == "measles":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1="", level2="", level3="")
-        fig = create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
+        if tree_file_filtred in tree_fig:
+            print("OK")
+            fig = tree_fig[tree_file_filtred]
+        else:
+            print("KO")
+            fig = create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
+            tree_fig[tree_file_filtred] = fig
     elif virus_name == "mumps":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=mumps, level2="", level3="")
-        fig = create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
+        if tree_file_filtred in tree_fig:
+            print("OK")
+            fig = tree_fig[tree_file_filtred]
+        else:
+            print("KO")
+            fig = create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
+            tree_fig[tree_file_filtred] = fig
     elif virus_name == "dengue":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat = create_paths_file(virus_name, level1=dengue, level2="", level3="")
-        fig = create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
+        if tree_file_filtred in tree_fig:
+            print("OK")
+            fig = tree_fig[tree_file_filtred]
+        else:
+            print("KO")
+            fig = create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
+            tree_fig[tree_file_filtred] = fig
     elif virus_name == "lassa":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=lassa, level2="", level3="")
-        fig = create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
+        if tree_file_filtred in tree_fig:
+            print("OK")
+            fig = tree_fig[tree_file_filtred]
+        else:
+            print("KO")
+            fig = create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
+            tree_fig[tree_file_filtred] = fig
     elif virus_name == "avian":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=avian_opt1, level2=avian_opt2, level3="")
-        fig = create_fig(virus_name, tree_file, metadata_file)
+        if tree_file_filtred in tree_fig:
+            print("OK")
+            fig = tree_fig[tree_file_filtred]
+        else:
+            print("KO")
+            fig = create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
+            tree_fig[tree_file_filtred] = fig
     elif virus_name == "flu":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=flu_opt1, level2=flu_opt2, level3=flu_opt3)
-        fig = create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
+        if tree_file_filtred in tree_fig:
+            print("OK")
+            fig = tree_fig[tree_file_filtred]
+        else:
+            print("KO")
+            fig = create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
+            tree_fig[tree_file_filtred] = fig
     return dcc.Graph(
-                    id='top-graph',
-                    figure=fig
-                ),
+            id='top-graph',
+            figure=fig
+        ),
 
 
 @app.callback(
@@ -866,4 +905,4 @@ def _update_map(virus_name, mumps, dengue, lassa, avian_opt1, avian_opt2, flu_op
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True, port=5555)
+    app.run_server(debug=True, port=5556)
