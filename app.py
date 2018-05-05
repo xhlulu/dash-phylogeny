@@ -14,6 +14,7 @@ virus_name = "zika"
 species = ['avian', 'dengue', 'ebola', 'flu', 'lassa', 'measles', 'mumps', 'zika']
 static_image_route = ''
 
+tree_fig = {}
 
 image_filename = 'img/forum_logo.png'
 encoded_image = base64.b64encode(open(image_filename, 'rb').read())
@@ -579,7 +580,10 @@ virus_name = "zika"
 species = ['avian', 'dengue', 'ebola', 'flu', 'lassa', 'measles', 'mumps', 'zika']
 tree_file, metadata_file, metadata_file_stat = create_paths_file(virus_name, level1="", level2="", level3="")
 
+print(tree_file)
 fig = create_fig(virus_name, tree_file, metadata_file)
+tree_fig[tree_file] = fig
+
 #fig_map = Virus.create_map()
 fig_map_bubble = create_map_bubble(metadata_file_stat)
 
@@ -837,8 +841,6 @@ def _update_fig(virus_name, mumps, dengue, lassa, avian_opt1, avian_opt2, flu_op
         return create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
 
 
-
-
 @app.callback(
     dash.dependencies.Output('right-mid-graph', 'figure'),
     [dash.dependencies.Input('my-dropdown1', 'value'),
@@ -869,4 +871,4 @@ def _update_map(virus_name, mumps, dengue, lassa, avian_opt1, avian_opt2, flu_op
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True, port=5557)
+    app.run_server(debug=True, port=5555)
