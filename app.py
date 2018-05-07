@@ -222,21 +222,57 @@ def get_lat(city):
     return location.latitude
 
 
-def create_map_bubble(metadata_file_stat):
+def create_map_bubble(virus_name, metadata_file_stat):
     df = pd.read_csv(metadata_file_stat)
+    df = df.sort_values(by=['pop'], ascending=False)
     df.head()
-
+    print(df)
     df['text'] = df['name'] + '<br>Virus proportion ' + (df['pop']).astype(str)
-    limits = [(0, 2), (3, 10), (11, 20), (21, 50), (50, 3000)]
+    limits = [(0, 10), (11, 20), (51, 100), (101, 300), (301, 5000)]
     colors = ["rgb(0,116,217)", "rgb(255,65,54)", "rgb(133,20,75)", "rgb(255,133,27)", "lightgrey"]
     cities = []
     scale = 1
 
+    #print("AV")
+    #for index, row in df.iterrows():
+        #print(row['pop'])
+    #print("AP")
+
+    """
+    for index, row in df.iterrows():
+        i = 0
+        found = False
+        while i < len(limits) and found is False:
+            print(i)
+            lim = limits[i]
+            if row['pop'] >= lim[0] and row['pop'] <= lim[1]:
+                found = True
+                print("Trouve")
+                print(lim[0], " - ", lim[1])
+                print(row['pop'])
+                print("")
+                city = dict(
+                    type='scattergeo',
+                    lon=df['lon'],
+                    lat=df['lat'],
+                    text=df['text'],
+                    marker=dict(
+                        size=df['pop'] / scale,
+                        color=colors[i],
+                        line=dict(width=0.5, color='rgb(40,40,40)'),
+                        sizemode='area'
+                    ),
+                    name='{0} - {1}'.format(lim[0], lim[1]))
+                cities.append(city)
+            i = i + 1
+
+    """
     for i in range(len(limits)):
         lim = limits[i]
         df_sub = df[lim[0]:lim[1]]
         city = dict(
             type='scattergeo',
+            locationmode='USA-states',
             lon=df_sub['lon'],
             lat=df_sub['lat'],
             text=df_sub['text'],
@@ -249,8 +285,9 @@ def create_map_bubble(metadata_file_stat):
             name='{0} - {1}'.format(lim[0], lim[1]))
         cities.append(city)
 
+
     layout = dict(
-        title='2018 Dispersion of virus<br>(Click legend to toggle traces)',
+        title='2018 Dispersion of '+virus_name+'<br>(Click legend to toggle traces)',
         showlegend=True,
         geo=dict(
             showland=True,
@@ -581,7 +618,7 @@ tree_fig[tree_file] = fig
 
 
 #fig_map = create_map()
-fig_map_bubble = create_map_bubble(metadata_file_stat)
+fig_map_bubble = create_map_bubble(virus_name, metadata_file_stat)
 
 def serve_layout():
     return html.Div([
@@ -690,7 +727,8 @@ def serve_layout():
                             dcc.Graph(
                                 id='right-mid-graph',
                                 figure=fig_map_bubble
-                            )
+                            ),
+                            html.Div(id="id-histo")
                         ])
                     )
                 ]
@@ -699,21 +737,6 @@ def serve_layout():
                 className="seven columns",
                 children=html.Div([
                     html.Div(id='right-top-graph'),
-                    dcc.Graph(
-                        id='right-bottom-graph',
-                        figure={
-                            'data': [{
-                                'x': [1, 2, 3],
-                                'y': [3, 1, 2],
-                                'type': 'bar'
-                            }],
-                            'layout': {
-                                'height': 400,
-                                'margin': {'l': 10, 'b': 20, 't': 0, 'r': 0}
-                            }
-                        }
-                    )
-
                 ])
             ),
             html.Div(
@@ -818,55 +841,43 @@ def _update_fig(virus_name, mumps, dengue, lassa, avian_opt1, avian_opt2, flu_op
     if virus_name == "ebola" or virus_name == "zika" or virus_name == "measles":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1="", level2="", level3="")
         if tree_file_filtred in tree_fig:
-            print("OK")
             fig = tree_fig[tree_file_filtred]
         else:
-            print("KO")
             fig = create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
             tree_fig[tree_file_filtred] = fig
     elif virus_name == "mumps":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=mumps, level2="", level3="")
         if tree_file_filtred in tree_fig:
-            print("OK")
             fig = tree_fig[tree_file_filtred]
         else:
-            print("KO")
             fig = create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
             tree_fig[tree_file_filtred] = fig
     elif virus_name == "dengue":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat = create_paths_file(virus_name, level1=dengue, level2="", level3="")
         if tree_file_filtred in tree_fig:
-            print("OK")
             fig = tree_fig[tree_file_filtred]
         else:
-            print("KO")
             fig = create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
             tree_fig[tree_file_filtred] = fig
     elif virus_name == "lassa":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=lassa, level2="", level3="")
         if tree_file_filtred in tree_fig:
-            print("OK")
             fig = tree_fig[tree_file_filtred]
         else:
-            print("KO")
             fig = create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
             tree_fig[tree_file_filtred] = fig
     elif virus_name == "avian":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=avian_opt1, level2=avian_opt2, level3="")
         if tree_file_filtred in tree_fig:
-            print("OK")
             fig = tree_fig[tree_file_filtred]
         else:
-            print("KO")
             fig = create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
             tree_fig[tree_file_filtred] = fig
     elif virus_name == "flu":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=flu_opt1, level2=flu_opt2, level3=flu_opt3)
         if tree_file_filtred in tree_fig:
-            print("OK")
             fig = tree_fig[tree_file_filtred]
         else:
-            print("KO")
             fig = create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
             tree_fig[tree_file_filtred] = fig
     return dcc.Graph(
@@ -886,23 +897,66 @@ def _update_fig(virus_name, mumps, dengue, lassa, avian_opt1, avian_opt2, flu_op
 def _update_map(virus_name, mumps, dengue, lassa, avian_opt1, avian_opt2, flu_opt1, flu_opt2, flu_opt3):
     if virus_name == "ebola" or virus_name == "zika" or virus_name == "measles":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1="", level2="", level3="")
-        return create_map_bubble(metadata_file_stat_filtred)
+        return create_map_bubble(virus_name, metadata_file_stat_filtred)
     elif virus_name == "mumps":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=mumps, level2="", level3="")
-        return create_map_bubble(metadata_file_stat_filtred)
+        return create_map_bubble(virus_name, metadata_file_stat_filtred)
     elif virus_name == "dengue":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=dengue, level2="", level3="")
-        return create_map_bubble(metadata_file_stat_filtred)
+        return create_map_bubble(virus_name, metadata_file_stat_filtred)
     elif virus_name == "lassa":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=lassa, level2="", level3="")
-        return create_map_bubble(metadata_file_stat_filtred)
+        return create_map_bubble(virus_name, metadata_file_stat_filtred)
     elif virus_name == "avian":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=avian_opt1, level2=avian_opt2, level3="")
-        return create_map_bubble(metadata_file_stat_filtred)
+        return create_map_bubble(virus_name, metadata_file_stat_filtred)
     elif virus_name == "flu":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=flu_opt1, level2=flu_opt2, level3=flu_opt3)
-        return create_map_bubble(metadata_file_stat_filtred)
+        return create_map_bubble(virus_name, metadata_file_stat_filtred)
+
+
+@app.callback(
+    dash.dependencies.Output('id-histo', 'children'),
+    [dash.dependencies.Input('my-dropdown1', 'value'),
+     dash.dependencies.Input('my-dropdown2', 'value'),
+     dash.dependencies.Input('my-dropdown3', 'value'),
+     dash.dependencies.Input('my-dropdown4', 'value'),
+     dash.dependencies.Input('my-dropdown5', 'value'), dash.dependencies.Input('my-dropdown6', 'value'),
+     dash.dependencies.Input('my-dropdown7', 'value'), dash.dependencies.Input('my-dropdown8', 'value'), dash.dependencies.Input('my-dropdown9', 'value')])
+def _update_histo(virus_name, mumps, dengue, lassa, avian_opt1, avian_opt2, flu_opt1, flu_opt2, flu_opt3):
+    df = []
+    if virus_name == "ebola" or virus_name == "zika" or virus_name == "measles":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1="", level2="", level3="")
+        df = pd.read_csv(metadata_file_stat_filtred)
+    elif virus_name == "mumps":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=mumps, level2="", level3="")
+        df = pd.read_csv(metadata_file_stat_filtred)
+    elif virus_name == "dengue":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=dengue, level2="", level3="")
+        df = pd.read_csv(metadata_file_stat_filtred)
+    elif virus_name == "lassa":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=lassa, level2="", level3="")
+        df = pd.read_csv(metadata_file_stat_filtred)
+    elif virus_name == "avian":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=avian_opt1, level2=avian_opt2, level3="")
+        df = pd.read_csv(metadata_file_stat_filtred)
+    elif virus_name == "flu":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=flu_opt1, level2=flu_opt2, level3=flu_opt3)
+        df = pd.read_csv(metadata_file_stat_filtred)
+    return dcc.Graph(
+            id='right-bottom-histo',
+            figure={
+                'data': [{
+                    'x': df['name'],
+                    'y': df['pop'],
+                    'type': 'bar'
+                }],
+                'layout': {
+                    'title': 'Distribution of {}'.format(virus_name)
+                }
+            }
+        )
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True, port=5556)
+    app.run_server(debug=True, port=5557)
