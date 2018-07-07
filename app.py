@@ -5,14 +5,17 @@ import dash_html_components as html
 from Bio import Phylo
 import pandas as pd
 from geopy.geocoders import Nominatim
-import base64
+import plotly.graph_objs as go
+import numpy as np
+import random
 
+app = dash.Dash(__name__)
+server = app.server
 
-
-virus_name = "zika"
-species = ['avian', 'dengue', 'ebola', 'flu', 'lassa', 'measles', 'mumps', 'zika']
+virus_name = "measles"
+species = ['Avian', 'Ebola', 'Lassa', 'Measles', 'Mumps', 'Zika']
 tree_fig = {}
-
+mapbox_access_token = "pk.eyJ1IjoiamFja3AiLCJhIjoidGpzN0lXVSJ9.7YK6eRwUNFwd3ODZff6JvA"
 
 
 
@@ -114,7 +117,7 @@ def read_metadata(filename):
 
 
 def create_title(virus, nb_genome):
-    graph_title = "Phylogeny of " + virus + " Virus<br>" + str(
+    graph_title = "Phylogeny of " + virus.title() + " Virus<br>" + str(
         nb_genome) + " genomes colored according to region and country"
     return graph_title
 
@@ -122,65 +125,6 @@ def create_title(virus, nb_genome):
 def compute_expensive_data(chemin):
     dir = dir + chemin
     return dir
-
-
-def create_map():
-    df_airports = pd.read_csv(
-        'https://raw.githubusercontent.com/plotly/datasets/master/2011_february_us_airport_traffic.csv')
-    df_airports.head()
-
-    df_flight_paths = pd.read_csv(
-        'https://raw.githubusercontent.com/plotly/datasets/master/2011_february_aa_flight_paths.csv')
-    df_flight_paths.head()
-
-    airports = [dict(
-        type='scattergeo',
-        locationmode='USA-states',
-        lon=df_airports['long'],
-        lat=df_airports['lat'],
-        hoverinfo='text',
-        text=df_airports['airport'],
-        mode='markers',
-        marker=dict(
-            size=2,
-            color='rgb(255, 0, 0)',
-            line=dict(
-                width=3,
-                color='rgba(68, 68, 68, 0)'
-            )
-        ))]
-
-    flight_paths = []
-    for i in range(len(df_flight_paths)):
-        flight_paths.append(
-            dict(
-                type='scattergeo',
-                locationmode='USA-states',
-                lon=[df_flight_paths['start_lon'][i], df_flight_paths['end_lon'][i]],
-                lat=[df_flight_paths['start_lat'][i], df_flight_paths['end_lat'][i]],
-                mode='lines',
-                line=dict(
-                    width=1,
-                    color='red',
-                ),
-                opacity=float(df_flight_paths['cnt'][i]) / float(df_flight_paths['cnt'].max()),
-            )
-        )
-
-    layout = dict(
-        title='Feb. 2011 American Airline flight paths<br>(Hover for airport names)',
-        showlegend=False,
-        geo=dict(
-            scope='north america',
-            projection=dict(type='azimuthal equal area'),
-            showland=True,
-            landcolor='rgb(243, 243, 243)',
-            countrycolor='rgb(204, 204, 204)',
-        ),
-    )
-
-    fig_map = dict(data=flight_paths + airports, layout=layout)
-    return fig_map
 
 
 def get_lon_lat(city):
@@ -222,89 +166,302 @@ def get_lat(city):
     return location.latitude
 
 
-def create_map_bubble(virus_name, metadata_file_stat):
+def create_map_bubble_year(virus_name, metadata_file_stat, map_choice, min_date, max_date):
     df = pd.read_csv(metadata_file_stat)
-    df = df.sort_values(by=['pop'], ascending=False)
+    #To select only the data between min_date and max_date
+    df = df[df["Year"] >= min_date]
+    df = df[df["Year"] <= max_date]
+    #min_date, max_date = min_max_date(df)
     df.head()
-    print(df)
-    df['text'] = df['name'] + '<br>Virus proportion ' + (df['pop']).astype(str)
-    limits = [(0, 10), (11, 20), (51, 100), (101, 300), (301, 5000)]
-    colors = ["rgb(0,116,217)", "rgb(255,65,54)", "rgb(133,20,75)", "rgb(255,133,27)", "lightgrey"]
-    cities = []
-    scale = 1
 
-    #print("AV")
-    #for index, row in df.iterrows():
-        #print(row['pop'])
-    #print("AP")
+    cases = []
+    colors = ['rgb(231,229,204)', 'rgb(255,255,204)', 'rgb(255,178,102)', 'rgb(255,153,51)',
+              'rgb(204,0,0)', 'rgb(189,215,231)', 'rgb(107,174,214)', 'rgb(33,113,181)',
+              'rgb(255,102,255)', 'rgb(189,15,255)', 'rgb(121,74,244)', 'rgb(133,13,181)',
+              'rgb(239,243,255)', 'rgb(189,215,231)', 'rgb(107,174,214)', 'rgb(33,113,181)']
+    months = {1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May', 6: 'Jun', 7: 'Jul', 8: 'Aug', 9: 'Sept', 10: 'Oct',  11: 'Nov', 12: 'Dec'}
 
-    """
-    for index, row in df.iterrows():
-        i = 0
-        found = False
-        while i < len(limits) and found is False:
-            print(i)
-            lim = limits[i]
-            if row['pop'] >= lim[0] and row['pop'] <= lim[1]:
-                found = True
-                print("Trouve")
-                print(lim[0], " - ", lim[1])
-                print(row['pop'])
-                print("")
-                city = dict(
-                    type='scattergeo',
-                    lon=df['lon'],
-                    lat=df['lat'],
-                    text=df['text'],
-                    marker=dict(
-                        size=df['pop'] / scale,
-                        color=colors[i],
-                        line=dict(width=0.5, color='rgb(40,40,40)'),
-                        sizemode='area'
-                    ),
-                    name='{0} - {1}'.format(lim[0], lim[1]))
-                cities.append(city)
-            i = i + 1
+    if map_choice == 1:
+        for i in range(1, 13)[::-1]:
+            cases.append(go.Scattergeo(
+                lon=df[df['Month'] == i]['Lon'],  # -(max(range(6,10))-i),
+                lat=df[df['Month'] == i]['Lat'],
+                text=df[df['Month'] == i]['Value'],
+                name=months[i],
+                marker=dict(
+                    size=df[df['Month'] == i]['Value'],
+                    color=colors[i - 1],
+                    line=dict(width=0)
+                ),
+            ))
 
-    """
-    for i in range(len(limits)):
-        lim = limits[i]
-        df_sub = df[lim[0]:lim[1]]
-        city = dict(
-            type='scattergeo',
-            locationmode='USA-states',
-            lon=df_sub['lon'],
-            lat=df_sub['lat'],
-            text=df_sub['text'],
-            marker=dict(
-                size=df_sub['pop'] / scale,
-                color=colors[i],
-                line=dict(width=0.5, color='rgb(40,40,40)'),
-                sizemode='area'
+        cases[0]['text'] = df[df['Month'] == 9]['Value'].map('{:.0f}'.format).astype(str) + ' ' + \
+                           df[df['Month'] == 9]['Country']
+        cases[0]['mode'] = 'markers+text'
+        cases[0]['textposition'] = 'bottom center'
+
+        layout = go.Layout(
+            title=virus_name.title() + ' Virus cases reported by month in West Africa <br>Between ' + str(min_date) + " and " + str(max_date),
+            geo=dict(
+                resolution=50,
+                scope='africa',
+                showframe=False,
+                showcoastlines=True,
+                showland=True,
+                landcolor="rgb(229, 229, 229)",
+                countrycolor="rgb(255, 255, 255)",
+                coastlinecolor="rgb(255, 255, 255)",
+                projection=dict(
+                    type='Mercator'
+                ),
+                lonaxis=dict(range=[-15.0, -5.0]),
+                lataxis=dict(range=[0.0, 12.0]),
+                domain=dict(
+                    x=[0, 1],
+                    y=[0, 1]
+                )
             ),
-            name='{0} - {1}'.format(lim[0], lim[1]))
-        cities.append(city)
+            geo2=dict(
+                scope='world',
+                showframe=False,
+                showland=True,
+                landcolor="rgb(229, 229, 229)",
+                showcountries=False,
+                domain=dict(
+                    x=[0, 0.6],
+                    y=[0, 0.6]
+                ),
+                bgcolor='rgba(255, 255, 255, 0.0)',
+            ),
+            legend=dict(
+                traceorder='reversed'
+            )
+        )
+        fig_map_bubble2 = go.Figure(layout=layout, data=cases)
+        return fig_map_bubble2
+    elif map_choice == 2:
+        df_old = df
+        #print(df_old)
+        df = pd.read_csv('data/2014_world_gdp_with_codes.csv')
+        for index2, row2 in df.iterrows():
+            for index, row in df_old.iterrows():
+                if row[7] == row2[2]:
+                    df.loc[index2, 'GDP (BILLIONS)'] += df_old.loc[index, 'Value']
+
+        data = [dict(
+            type='choropleth',
+            locations=df['CODE'],
+            z=df['GDP (BILLIONS)'],
+            text=df['COUNTRY'],
+            colorscale=[[0, "rgb(5, 10, 172)"], [0.35, "rgb(40, 60, 190)"], [0.5, "rgb(70, 100, 245)"], \
+                        [0.6, "rgb(90, 120, 245)"], [0.7, "rgb(106, 137, 247)"], [1, "rgb(220, 220, 220)"]],
+            autocolorscale=False,
+            reversescale=True,
+            marker=dict(
+                line=dict(
+                    color='rgb(180,180,180)',
+                    width=0.5
+                )),
+            colorbar=dict(
+                autotick=False,
+                titleside="right",
+                title='Number of ' + virus_name.title() + ' Virus'),
+        )]
+
+        layout = dict(
+            title=virus_name.title() + ' Virus cases in West Africa <br>Between ' + str(min_date) + " and " + str(max_date),
+            margin=go.Margin(
+                l=0,
+                r=0,
+                pad=0
+            ),
+            geo=dict(
+                showframe=False,
+                showcoastlines=False,
+                projection=dict(
+                    type='Mercator'
+                )
+            ),
+            autosize=True
+        )
+        
+        fig = dict(data=data, layout=layout)
+        return fig
+    else:
+        for i in range(1, 13)[::-1]:
+            cases.append(go.Scattergeo(
+                lon=df[df['Month'] == i]['Lon'],  # -(max(range(6,10))-i),
+                lat=df[df['Month'] == i]['Lat'],
+                text=df[df['Month'] == i]['Value'],
+                name=months[i],
+                marker=dict(
+                    size=df[df['Month'] == i]['Value'],
+                    color=colors[i - 1],
+                    line=dict(width=0)
+                ),
+            ))
+
+        cases[0]['text'] = df[df['Month'] == 9]['Value'].map('{:.0f}'.format).astype(str) + ' ' + \
+                           df[df['Month'] == 9]['Country']
+        cases[0]['mode'] = 'markers+text'
+        cases[0]['textposition'] = 'bottom center'
+
+        inset = [
+            go.Choropleth(
+                locationmode='country names',
+                locations=df[df['Month'] == 9]['Country'],
+                z=df[df['Month'] == 9]['Value'],
+                text=df[df['Month'] == 9]['Country'],
+                colorscale=[[0, 'rgb(0, 0, 0)'], [1, 'rgb(0, 0, 0)']],
+                autocolorscale=False,
+                showscale=False,
+                geo='geo2'
+            ),
+            go.Scattergeo(
+                lon=[21.0936],
+                lat=[7.1881],
+                text=['Africa'],
+                mode='text',
+                showlegend=False,
+                geo='geo2'
+            )
+        ]
+
+        layout = go.Layout(
+            title=virus_name.title() + ' Virus cases reported by month in West Africa <br>Between ' + str(min_date) + " and " + str(max_date),
+            geo=dict(
+                resolution=50,
+                scope='africa',
+                showframe=False,
+                showcoastlines=True,
+                showland=True,
+                landcolor="rgb(229, 229, 229)",
+                countrycolor="rgb(255, 255, 255)",
+                coastlinecolor="rgb(255, 255, 255)",
+                projection=dict(
+                    type='Mercator'
+                ),
+                lonaxis=dict(range=[-15.0, -5.0]),
+                lataxis=dict(range=[0.0, 12.0]),
+                domain=dict(
+                    x=[0, 1],
+                    y=[0, 1]
+                )
+            ),
+            geo2=dict(
+                scope='world',
+                showframe=False,
+                showland=True,
+                landcolor="rgb(229, 229, 229)",
+                showcountries=False,
+                domain=dict(
+                    x=[0, 0.6],
+                    y=[0, 0.6]
+                ),
+                bgcolor='rgba(255, 255, 255, 0.0)',
+            ),
+            legend=dict(
+                traceorder='reversed'
+            )
+        )
+        fig_map_bubble2 = go.Figure(layout=layout, data=cases + inset)
+        return fig_map_bubble2
 
 
-    layout = dict(
-        title='2018 Dispersion of '+virus_name+'<br>(Click legend to toggle traces)',
-        showlegend=True,
-        geo=dict(
-            showland=True,
-            scope='world',
-            landcolor='rgb(217, 217, 217)',
-            subunitwidth=1,
-            countrywidth=1,
-            subunitcolor="rgb(255, 255, 255)",
-            countrycolor="rgb(255, 255, 255)"
-        ),
-    )
-
-    fig_map_bubble = dict(data=cities, layout=layout)
-    return fig_map_bubble
+def random_color():
+    # Make a list of colors to picvk from
+    colors = ["red", "green", "blue", "orange", "purple", "pink", "yellow", "black", "gray", "sliver", "violet", "yellowgreen", "turquoise", "sienna", "salmon"]
+    color = random.choice(colors)
+    #rgbl=[255,10,0]
+    #random.shuffle(rgbl)
+    return tuple(color)
 
 
-def create_fig(virus_name, tree_file, metadata_file):
+def create_curve_line(df, virus_name, min_date, max_date):
+    # Add step in x axe
+    step = 1
+    if 5 < max_date-min_date <= 10:
+        step = 2
+    elif 10 < max_date-min_date <= 50:
+        step = 5
+    elif max_date-min_date > 50:
+        step = 10
+    marks_data = []
+    for i in range(int(min_date), int(max_date+1), step):
+        marks_data.append(str(i))
+
+    if i < int(max_date):
+        marks_data.append(str(max_date))
+
+    year = marks_data
+    print(year)
+
+    results_country_by_year = df.groupby(['Country', 'Year'])['Value'].sum()
+    # Translate pandas.core.series.series object in dataframe
+    df_group_by_country = results_country_by_year.to_frame()
+    # Rename the first column in Value
+    df_group_by_country.columns = ['Value']
+    # Move the index values (i.e. Country column) in column and reset index
+    df_group_by_country = df_group_by_country.reset_index()
+    country_list = df_group_by_country.Country.unique()
+    p_data = []
+    p_name = []
+    p_year = []
+
+    for country_name in country_list:
+        country_data = np.extract(df_group_by_country.Country == country_name, df_group_by_country.Value)
+        country_year = np.extract(df_group_by_country.Country == country_name, df_group_by_country.Year)
+
+        #Stock country name in array structure
+        if len(country_name) != 0:
+            p_name.append(country_name)
+
+        # Stock country data in array structure
+        if len(country_data) != 0:
+            p_data.append(country_data)
+
+        # Stock country year in array structure
+        if len(country_year) != 0:
+            p_year.append(country_year)
+
+    #for l_country in p_data:
+        #print(l_country)
+
+
+    i = 0
+    data = []
+    for l_country in p_data:
+        trace = go.Scatter(
+            x=p_year[i],
+            y=l_country,
+            name=p_name[i],
+            line=dict(
+                color=('rgb('+str(random_color())+')'),
+                width=1)
+        )
+        i = i + 1
+        data.append(trace)
+        #print(l_country)
+
+    # Edit the layout
+    layout = dict(title="Evolution of " + virus_name.title() + " virus <br>Between " + str(min_date) + " and " + str(max_date) + " by country.",
+                  xaxis=dict(title='Year'),
+                  yaxis=dict(title='Number of ' + virus_name.title() + " virus"),
+                  legend=dict(orientation="h", x=.0, y=-.3),
+                  margin=go.Margin(
+                      l=50,
+                      r=0,
+                      b=100,
+                      t=100,
+                      pad=0
+                    ),
+                  )
+
+    fig = dict(data=data, layout=layout)
+    return fig
+
+
+def create_fig(virus_name, tree_file, metadata_file, ord_by):
     tree = read_treefile(tree_file)
     x_coords = get_x_coordinates(tree)
     y_coords = get_y_coordinates(tree)
@@ -321,7 +478,7 @@ def create_fig(virus_name, tree_file, metadata_file):
         text.append(cl.name)
 
     df = read_metadata(metadata_file)
-    data_metadata_stat_csv = df.groupby('Country')['Strain'].count()
+    data_metadata_stat_csv = df.groupby(ord_by)['Strain'].count()
 
     #for index_val, series_val in data_metadata_stat_csv.iteritems():
         #print(index_val, ",", series_val, ",", get_lat(index_val), ",", get_lon(index_val))
@@ -498,8 +655,6 @@ def create_fig(virus_name, tree_file, metadata_file):
     country = []
     region = []
     color = [intermediate_node_color] * len(X)
-    #print(set(list(df['Region'])))
-    #print(set(list(df['Country'])))
 
     for k, strain in enumerate(df['Strain']):
 
@@ -540,26 +695,28 @@ def create_fig(virus_name, tree_file, metadata_file):
               title='' #y title
               )
 
-    label_legend = set(list(df['Country']))
+    label_legend = set(list(df[ord_by]))
     nodes = []
 
     for elt in label_legend:
         node = dict(type='scatter',
-                   x=X,
-                   y=Y,
-                   mode='markers',
-                   marker=dict(color=color,
-                               size=5),
-                   text=text, #vignet information of each node
-                   hoverinfo='',
-                   name=elt
+                       x=X,
+                       y=Y,
+                       mode='markers',
+                       marker=dict(color=color,
+                                   size=5),
+                       text=text, #vignet information of each node
+                       hoverinfo='',
+                       name=elt
                    )
         nodes.append(node)
 
     layout = dict(title=graph_title,
+                paper_bgcolor='rgba(0,0,0,0)',
+                dragmode="select",
                 font=dict(family='Balto', size=14),
-                width=1000,
-                height=3000,
+                #width=1000,
+                height=1000,
                 autosize=True,
                 showlegend=True,
                 xaxis=dict(showline=True,
@@ -572,11 +729,12 @@ def create_fig(virus_name, tree_file, metadata_file):
                 hovermode='closest',
                 shapes=line_shapes,
                 plot_bgcolor='rgb(250,250,250)',
-                margin=dict(l=10)
+                legend={'x': 0, 'y': 1},
                )
 
     fig = dict(data=nodes, layout=layout)
     return fig
+
 
 #TO DO validation file and directory exist
 def create_paths_file(virus_name, level1="", level2="", level3=""):
@@ -584,193 +742,261 @@ def create_paths_file(virus_name, level1="", level2="", level3=""):
     if level1 == "" and level2 == "" and level3 == "":
         tree_file = dir + "nextstrain_" + virus_name + "_tree.new"
         metadata_file = dir + "nextstrain_" + virus_name + "_metadata.csv"
-        stat_file = dir + "stat_nextstrain_" + virus_name + "_metadata.csv"
+        stat_file = dir + "stat_year_nextstrain_" + virus_name + "_metadata.csv"
         return tree_file, metadata_file, stat_file
     elif level2 == "" and level3 == "":
         dir = dir + "/"+level1+"/"
         tree_file = dir + "nextstrain_" + virus_name + "_" + level1 + "_tree.new"
         metadata_file = dir + "nextstrain_" + virus_name + "_" + level1 + "_metadata.csv"
-        stat_file = dir + "stat_nextstrain_" + virus_name + "_" + level1 + "_metadata.csv"
+        stat_file = dir + "stat_year_nextstrain_" + virus_name + "_" + level1 + "_metadata.csv"
         return tree_file, metadata_file, stat_file
     elif level3 == "":
         dir = dir + "/" + level1 + "/"+level2+"/"
         tree_file = dir + "nextstrain_" + virus_name + "_" + level1 + "_" + level2 + "_tree.new"
         metadata_file = dir + "nextstrain_" + virus_name + "_" + level1 + "_" + level2 + "_metadata.csv"
-        stat_file = dir + "stat_nextstrain_" + virus_name + "_" + level1 + "_" + level2 + "_metadata.csv"
+        stat_file = dir + "stat_year_nextstrain_" + virus_name + "_" + level1 + "_" + level2 + "_metadata.csv"
         return tree_file, metadata_file, stat_file
     else:
         dir = dir + "/" + level1 + "/"+level2+"/"+level3+"/"
         tree_file = dir + "nextstrain_" + virus_name + "_" + level1 + "_" + level2 + "_" + level3 + "_tree.new"
         metadata_file = dir + "nextstrain_" + virus_name + "_" + level1 + "_" + level2 + "_" + level3 + "_metadata.csv"
-        stat_file = dir + "stat_nextstrain_" + virus_name + "_" + level1 + "_" + level2 + "_" + level3 + "_metadata.csv"
+        stat_file = dir + "stat_year_nextstrain_" + virus_name + "_" + level1 + "_" + level2 + "_" + level3 + "_metadata.csv"
         return tree_file, metadata_file, stat_file
 
 
+def date_4_number(date):
+    if 0 <= date <= 18:
+        date = date+2000
+    else:
+        date = date+1900
+    return date
 
-app = dash.Dash()
 
-virus_name = "zika"
-species = ['avian', 'dengue', 'ebola', 'flu', 'lassa', 'measles', 'mumps', 'zika']
+def slicer(min_date, max_date):
+    step = 1
+    if 5 < max_date-min_date <= 10:
+        step = 2
+    elif 10 < max_date-min_date <= 50:
+        step = 5
+    elif max_date-min_date > 50:
+        step = 10
+    marks_data = {}
+    for i in range(int(min_date), int(max_date)+1, step):
+        print("i "+str(i))
+        if i>int(max_date):
+            marks_data[i] = str(int(max_date))
+        else:
+            marks_data[i] = str(i)
+
+    if i < int(max_date):
+        marks_data[int(max_date)] = str(max_date)
+
+    return marks_data
+
+
+def min_max_date(df):
+    min_date = df['Year'].min()
+    #min_date = date_4_number(min_date)
+    max_date = df['Year'].max()
+    #max_date = date_4_number(max_date)
+    if min_date > max_date:
+        tmp = min_date
+        min_date = max_date
+        max_date = tmp
+    return min_date, max_date
+
+
 tree_file, metadata_file, metadata_file_stat = create_paths_file(virus_name, level1="", level2="", level3="")
+# To know the minimum and the maximum values of date for slicer
+df_stat_metadata = pd.read_csv(metadata_file_stat)
+min_date, max_date = min_max_date(df_stat_metadata)
+# create the dictionary of slider
+marks_data = slicer(min_date, max_date)
+min_max_date_value = [min_date, max_date]
 
-fig = create_fig(virus_name, tree_file, metadata_file)
+fig = create_fig(virus_name, tree_file, metadata_file, "Country")
 tree_fig[tree_file] = fig
 
+fig_map_bubble = create_map_bubble_year(virus_name, metadata_file_stat, 2, min_date, max_date)
+#print(df_stat_metadata)
+fig_curve_line = create_curve_line(df_stat_metadata, virus_name, min_date, max_date)
 
-#fig_map = create_map()
-fig_map_bubble = create_map_bubble(virus_name, metadata_file_stat)
-
+######################################### MAIN APP #########################################
 def serve_layout():
     return html.Div([
-            html.Div(
-                className="one columns"
+            # Banner display
+            html.Div([
+                html.H2(
+                    'Phylogeny trees and global spread of 6 viruses',
+                    id='title'
+                ),
+                html.Img(
+                    src="https://s3-us-west-1.amazonaws.com/plotly-tutorials/logo/new-branding/dash-logo-by-plotly-stripe-inverted.png"
+                )
+            ],
+                className="banner"
             ),
+
+            # Body
             html.Div(
-                className="three columns",
-                children=[
+                [
                     html.Div(
-                        children=html.Div([
-                            html.H1(children='Criterion'),
-                            html.H1(children=''),
-                            html.H6(children='Dataset'),
-                            dcc.Dropdown(
-                                id='my-dropdown1',
-                                options=[{'label': species[i], 'value': species[i]} for i in range(len(species))],
-                                value='zika',
+                        [
+                            html.Div(
+                                [
+                                    html.Div(
+                                        [
+                                        html.Br(),
+                                        html.Br(),
+                                        html.H6(children='Dataset'),
+                                        dcc.Dropdown(
+                                            id='d_virus-name',
+                                            options=[{'label': species[i], 'value': species[i]} for i in range(len(species))],
+                                            value='Measles',
+                                        ),
+                                        html.Div(id='output-container'),
+
+                                        html.Div(id='controls-container_mumps', children=[
+                                            dcc.Dropdown(
+                                                id='d_mumps',
+                                                options=[{'label': i, 'value': i} for i in ['global', 'na']],
+                                                value='global',
+                                            ),
+                                        ]),
+
+                                        html.Div(id='controls-container_dengue', children=[
+                                            dcc.Dropdown(
+                                                id='d_dengue',
+                                                options=[{'label': i, 'value': i} for i in ['all', 'denv1', 'denv2', 'denv3', 'denv4']],
+                                                value='all',
+                                            ),
+                                        ]),
+
+                                        html.Div(id='controls-container_lassa', children=[
+                                            dcc.Dropdown(
+                                                id='d_lassa',
+                                                options=[{'label': i, 'value': i} for i in ['s', 'l']],
+                                                value='s',
+                                            ),
+                                        ]),
+
+                                        html.Div(id='controls-container_avian', children=[
+                                            dcc.Dropdown(
+                                                id='d_avian_opt1',
+                                                options=[{'label': i, 'value': i} for i in ['h7n9']],
+                                                value='h7n9',
+                                            ),
+                                            dcc.Dropdown(
+                                                id='d_avian_opt2',
+                                                options=[{'label': i, 'value': i} for i in ['ha', 'mp', 'na', 'ns', 'np', 'pa', 'pb2', 'pb1']],
+                                                value='ha',
+                                            ),
+                                        ]),
+
+                                        html.Div(id='controls-container_flu', children=[
+                                            dcc.Dropdown(
+                                                id='d_flu_opt1',
+                                                options=[{'label': i, 'value': i} for i in ['h3n2', 'h1n1pdm', 'vic', 'yam']],
+                                                value='h3n2',
+                                            ),
+                                            dcc.Dropdown(
+                                                id='d_flu_opt2',
+                                                options=[{'label': i, 'value': i} for i in
+                                                         ['ha', 'na']],
+                                                value='ha',
+                                            ),
+                                            dcc.Dropdown(
+                                                id='d_flu_opt3',
+                                                options=[{'label': i, 'value': i} for i in
+                                                         ['2y', '3y', '6y', '12y']],
+                                                value='3y',
+                                            ),
+                                        ]),
+                                        html.Br(),
+                                        html.H6(children='Color by'),
+                                        dcc.Dropdown(
+                                            id='my-dropdown10',
+                                            options=[{'label': i, 'value': i} for i in ['Division', 'Country', 'Date']],
+                                            value='Country',
+                                        ),
+                                        html.Br(),
+                                        html.Br(),
+                                        html.H6(children='Data Range'),
+                                        dcc.RangeSlider(
+                                            id='id-year',
+                                            min=min_date,
+                                            max=max_date,
+                                            step=None,
+                                            marks=marks_data,
+                                            value=min_max_date_value
+                                        ),
+                                        html.Br(),
+                                        html.Br(),
+                                        html.Div(id='output-container-range-slider'),
+                                        html.Br(),
+                                        html.Br(),
+                                        dcc.Graph(
+                                            id='curve-line-graph',
+                                            figure=fig_curve_line
+                                        ),
+                                    ]),
+                                ],
+                                className="four columns",
+                                style={'margin-top': '10'}
                             ),
-                            html.Div(id='output-container'),
+                            html.Br(),
+                            html.Div(
+                                className="eight columns",
+                                style={'margin-top': '10'},
+                                children=html.Div([
+                                    html.Div(id='right-top-graph')
+                                ])
+                            )
+                    ], className="row"),
 
-                            html.Div(id='controls-container_mumps', children=[
-                                dcc.Dropdown(
-                                    id='my-dropdown2',
-                                    options=[{'label': i, 'value': i} for i in ['global', 'na']],
-                                    value='global',
-                                ),
-                            ]),
-
-                            html.Div(id='controls-container_dengue', children=[
-                                dcc.Dropdown(
-                                    id='my-dropdown3',
-                                    options=[{'label': i, 'value': i} for i in ['all', 'denv1', 'denv2', 'denv3', 'denv4']],
-                                    value='all',
-                                ),
-                            ]),
-
-                            html.Div(id='controls-container_lassa', children=[
-                                dcc.Dropdown(
-                                    id='my-dropdown4',
-                                    options=[{'label': i, 'value': i} for i in ['s', 'l']],
-                                    value='s',
-                                ),
-                            ]),
-
-                            html.Div(id='controls-container_avian', children=[
-                                dcc.Dropdown(
-                                    id='my-dropdown5',
-                                    options=[{'label': i, 'value': i} for i in ['h7n9']],
-                                    value='h7n9',
-                                ),
-                                dcc.Dropdown(
-                                    id='my-dropdown6',
-                                    options=[{'label': i, 'value': i} for i in ['ha', 'mp', 'na', 'ns', 'np', 'pa', 'pb2', 'pb1']],
-                                    value='ha',
-                                ),
-                            ]),
-
-                            html.Div(id='controls-container_flu', children=[
-                                dcc.Dropdown(
-                                    id='my-dropdown7',
-                                    options=[{'label': i, 'value': i} for i in ['h3n2', 'h1n1pdm', 'vic', 'yam']],
-                                    value='h3n2',
-                                ),
-                                dcc.Dropdown(
-                                    id='my-dropdown8',
-                                    options=[{'label': i, 'value': i} for i in
-                                             ['ha', 'na']],
-                                    value='ha',
-                                ),
-                                dcc.Dropdown(
-                                    id='my-dropdown9',
-                                    options=[{'label': i, 'value': i} for i in
-                                             ['2y', '3y', '6y', '12y']],
-                                    value='3y',
-                                ),
-                            ]),
-
-                            html.H1(children=''),
-                            html.H1(children=''),
-                            html.H6(children='Date Range'),
-                            dcc.RangeSlider(
-                                count=1,
-                                min=0,
-                                max=10,
-                                step=0.5,
-                                marks={
-                                    0: '0 °F',
-                                    3: '3 °F',
-                                    5: '5 °F',
-                                    7.65: '7.65 °F',
-                                    10: '10 °F'
-                                },
-                                value=[3, 7.65]
+                    html.Div(
+                        [
+                            html.Div(
+                                [
+                                    dcc.Graph(
+                                        id='left-mid-graph',
+                                        figure=fig_map_bubble
+                                    )
+                                ],
+                                className='six columns',
+                                style={'margin-top': '10'}
                             ),
-                            html.H1(children=''),
-                            html.H1(children=''),
-                            html.H1(children=''),
-                            html.H6(children='Color by'),
-                            dcc.Dropdown(
-                                id='my-dropdown10',
-                                options=[{'label': i, 'value': i} for i in ['genetype', 'country', 'region', 'authors', 'data']],
-                                value='country',
+                            html.Div(
+                                [
+                                    html.Div(id="id-histo")
+                                ],
+                                className='six columns',
+                                style={'margin-top': '10'}
                             ),
-
-                            dcc.Graph(
-                                id='right-mid-graph',
-                                figure=fig_map_bubble
-                            ),
-                            html.Div(id="id-histo")
-                        ])
+                        ], className="row"
                     )
-                ]
-            ),
-            html.Div(
-                className="seven columns",
-                children=html.Div([
-                    html.Div(id='right-top-graph'),
-                ])
-            ),
-            html.Div(
-                className="one columns",
-                children=html.Div([
-                    html.Img(id='image',
-                             src="http://www.info2.uqam.ca/~makarenkov_v/images_trex/t-rex-t.gif",
-                             )
-
-                ])
-            )
-    ])
+                ],
+                    className="container"
+                )
+            ])
 
 
 app.layout = serve_layout()
 
 
-app.css.append_css({
-    'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'
-})
-
-
+######################################### UPDATING FIGURES #########################################
 @app.callback(
     dash.dependencies.Output('output-container', 'children'),
-    [dash.dependencies.Input('my-dropdown1', 'value')])
+    [dash.dependencies.Input('d_virus-name', 'value')])
 def _update_output(virus_name):
     return 'You have selected "{}" virus'.format(virus_name)
 
 
 @app.callback(
     dash.dependencies.Output('controls-container_mumps', 'style'),
-    [dash.dependencies.Input('my-dropdown1', 'value')])
+    [dash.dependencies.Input('d_virus-name', 'value')])
 def _update_output(virus_name):
-    if virus_name == "mumps":
+    if virus_name == "Mumps":
         return {'display': 'block'}
     else:
         return {'display': 'none'}
@@ -778,9 +1004,9 @@ def _update_output(virus_name):
 
 @app.callback(
     dash.dependencies.Output('controls-container_dengue', 'style'),
-    [dash.dependencies.Input('my-dropdown1', 'value')])
+    [dash.dependencies.Input('d_virus-name', 'value')])
 def _update_output(virus_name):
-    if virus_name == "dengue":
+    if virus_name == "Dengue":
         return {'display': 'block'}
     else:
         return {'display': 'none'}
@@ -788,9 +1014,9 @@ def _update_output(virus_name):
 
 @app.callback(
     dash.dependencies.Output('controls-container_lassa', 'style'),
-    [dash.dependencies.Input('my-dropdown1', 'value')])
+    [dash.dependencies.Input('d_virus-name', 'value')])
 def _update_output(virus_name):
-    if virus_name == "lassa":
+    if virus_name == "Lassa":
         return {'display': 'block'}
     else:
         return {'display': 'none'}
@@ -798,9 +1024,9 @@ def _update_output(virus_name):
 
 @app.callback(
     dash.dependencies.Output('controls-container_avian', 'style'),
-    [dash.dependencies.Input('my-dropdown1', 'value')])
+    [dash.dependencies.Input('d_virus-name', 'value')])
 def _update_output(virus_name):
-    if virus_name == "avian":
+    if virus_name == "Avian":
         return {'display': 'block'}
     else:
         return {'display': 'none'}
@@ -808,9 +1034,9 @@ def _update_output(virus_name):
 
 @app.callback(
     dash.dependencies.Output('controls-container_flu', 'style'),
-    [dash.dependencies.Input('my-dropdown1', 'value')])
+    [dash.dependencies.Input('d_virus-name', 'value')])
 def _update_output(virus_name):
-    if virus_name == "flu":
+    if virus_name == "Flu":
         return {'display': 'block'}
     else:
         return {'display': 'none'}
@@ -818,68 +1044,43 @@ def _update_output(virus_name):
 
 @app.callback(
     dash.dependencies.Output('right-top-graph', 'children'),
-    [dash.dependencies.Input('my-dropdown1', 'value'),
-     dash.dependencies.Input('my-dropdown2', 'value'),
-     dash.dependencies.Input('my-dropdown3', 'value'),
-     dash.dependencies.Input('my-dropdown4', 'value'),
-     dash.dependencies.Input('my-dropdown5', 'value'), dash.dependencies.Input('my-dropdown6', 'value'),
-     dash.dependencies.Input('my-dropdown7', 'value'), dash.dependencies.Input('my-dropdown8', 'value'), dash.dependencies.Input('my-dropdown9', 'value')])
-def _update_fig(virus_name, mumps, dengue, lassa, avian_opt1, avian_opt2, flu_opt1, flu_opt2, flu_opt3):
-    '''
-    I use the underscore in front of this function to suggest that it should not be called. In fact, only changes to the dropdown values should trigger its execution.
-    :param virus_name:
-    :param mumps:
-    :param dengue:
-    :param lassa:
-    :param avian_opt1:
-    :param avian_opt2:
-    :param flu_opt1:
-    :param flu_opt2:
-    :param flu_opt3:
-    :return: phylogeny tree
-    '''
+    [dash.dependencies.Input('d_virus-name', 'value'),
+     dash.dependencies.Input('d_mumps', 'value'),
+     dash.dependencies.Input('d_dengue', 'value'),
+     dash.dependencies.Input('d_lassa', 'value'),
+     dash.dependencies.Input('d_avian_opt1', 'value'), dash.dependencies.Input('d_avian_opt2', 'value'),
+     dash.dependencies.Input('d_flu_opt1', 'value'), dash.dependencies.Input('d_flu_opt2', 'value'), dash.dependencies.Input('d_flu_opt3', 'value'),
+     dash.dependencies.Input('my-dropdown10', 'value')])
+def _update_fig(virus_name, mumps, dengue, lassa, avian_opt1, avian_opt2, flu_opt1, flu_opt2, flu_opt3, ord_by_elt):
+    virus_name = virus_name.lower()
+    data_virus_info = {}
     if virus_name == "ebola" or virus_name == "zika" or virus_name == "measles":
-        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1="", level2="", level3="")
-        if tree_file_filtred in tree_fig:
-            fig = tree_fig[tree_file_filtred]
-        else:
-            fig = create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
-            tree_fig[tree_file_filtred] = fig
+        data_virus_info = {"virus_name": virus_name, "level1": "", "level2": "", "level3": ""}
+        #tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1="", level2="", level3="")
     elif virus_name == "mumps":
-        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=mumps, level2="", level3="")
-        if tree_file_filtred in tree_fig:
-            fig = tree_fig[tree_file_filtred]
-        else:
-            fig = create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
-            tree_fig[tree_file_filtred] = fig
+        data_virus_info = {"virus_name": virus_name, "level1": mumps, "level2": "", "level3": ""}
+        #tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=mumps, level2="", level3="")
     elif virus_name == "dengue":
-        tree_file_filtred, metadata_file_filtred, metadata_file_stat = create_paths_file(virus_name, level1=dengue, level2="", level3="")
-        if tree_file_filtred in tree_fig:
-            fig = tree_fig[tree_file_filtred]
-        else:
-            fig = create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
-            tree_fig[tree_file_filtred] = fig
+        data_virus_info = {"virus_name": virus_name, "level1": dengue, "level2": "", "level3": ""}
+        #tree_file_filtred, metadata_file_filtred, metadata_file_stat = create_paths_file(virus_name, level1=dengue, level2="", level3="")
     elif virus_name == "lassa":
-        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=lassa, level2="", level3="")
-        if tree_file_filtred in tree_fig:
-            fig = tree_fig[tree_file_filtred]
-        else:
-            fig = create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
-            tree_fig[tree_file_filtred] = fig
+        data_virus_info = {"virus_name": virus_name, "level1": lassa, "level2": "", "level3": ""}
+        #tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=lassa, level2="", level3="")
     elif virus_name == "avian":
-        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=avian_opt1, level2=avian_opt2, level3="")
-        if tree_file_filtred in tree_fig:
-            fig = tree_fig[tree_file_filtred]
-        else:
-            fig = create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
-            tree_fig[tree_file_filtred] = fig
+        data_virus_info = {"virus_name": virus_name, "level1": avian_opt1, "level2": avian_opt2, "level3": ""}
+        #tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=avian_opt1, level2=avian_opt2, level3="")
     elif virus_name == "flu":
-        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=flu_opt1, level2=flu_opt2, level3=flu_opt3)
-        if tree_file_filtred in tree_fig:
-            fig = tree_fig[tree_file_filtred]
-        else:
-            fig = create_fig(virus_name, tree_file_filtred, metadata_file_filtred)
-            tree_fig[tree_file_filtred] = fig
+        data_virus_info = {"virus_name": virus_name, "level1": flu_opt1, "level2": flu_opt2, "level3": flu_opt3}
+        #tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=flu_opt1, level2=flu_opt2, level3=flu_opt3)
+
+    tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(data_virus_info)
+    if tree_file_filtred in tree_fig:
+        fig = tree_fig[tree_file_filtred]
+    else:
+        if ord_by_elt == "Country" or ord_by_elt == "Division" or ord_by_elt == "Date":
+            fig = create_fig(virus_name, tree_file_filtred, metadata_file_filtred, ord_by_elt)
+
+        tree_fig[tree_file_filtred] = fig
     return dcc.Graph(
             id='top-graph',
             figure=fig
@@ -887,76 +1088,306 @@ def _update_fig(virus_name, mumps, dengue, lassa, avian_opt1, avian_opt2, flu_op
 
 
 @app.callback(
-    dash.dependencies.Output('right-mid-graph', 'figure'),
-    [dash.dependencies.Input('my-dropdown1', 'value'),
-     dash.dependencies.Input('my-dropdown2', 'value'),
-     dash.dependencies.Input('my-dropdown3', 'value'),
-     dash.dependencies.Input('my-dropdown4', 'value'),
-     dash.dependencies.Input('my-dropdown5', 'value'), dash.dependencies.Input('my-dropdown6', 'value'),
-     dash.dependencies.Input('my-dropdown7', 'value'), dash.dependencies.Input('my-dropdown8', 'value'), dash.dependencies.Input('my-dropdown9', 'value')])
+    dash.dependencies.Output('left-mid-graph', 'figure'),
+    [dash.dependencies.Input('d_virus-name', 'value'),
+     dash.dependencies.Input('d_mumps', 'value'),
+     dash.dependencies.Input('d_dengue', 'value'),
+     dash.dependencies.Input('d_lassa', 'value'),
+     dash.dependencies.Input('d_avian_opt1', 'value'), dash.dependencies.Input('d_avian_opt2', 'value'),
+     dash.dependencies.Input('d_flu_opt1', 'value'), dash.dependencies.Input('d_flu_opt2', 'value'), dash.dependencies.Input('d_flu_opt3', 'value')])
 def _update_map(virus_name, mumps, dengue, lassa, avian_opt1, avian_opt2, flu_opt1, flu_opt2, flu_opt3):
+    virus_name = virus_name.lower()
     if virus_name == "ebola" or virus_name == "zika" or virus_name == "measles":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1="", level2="", level3="")
-        return create_map_bubble(virus_name, metadata_file_stat_filtred)
     elif virus_name == "mumps":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=mumps, level2="", level3="")
-        return create_map_bubble(virus_name, metadata_file_stat_filtred)
     elif virus_name == "dengue":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=dengue, level2="", level3="")
-        return create_map_bubble(virus_name, metadata_file_stat_filtred)
     elif virus_name == "lassa":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=lassa, level2="", level3="")
-        return create_map_bubble(virus_name, metadata_file_stat_filtred)
     elif virus_name == "avian":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=avian_opt1, level2=avian_opt2, level3="")
-        return create_map_bubble(virus_name, metadata_file_stat_filtred)
     elif virus_name == "flu":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=flu_opt1, level2=flu_opt2, level3=flu_opt3)
-        return create_map_bubble(virus_name, metadata_file_stat_filtred)
+    df = pd.read_csv(metadata_file_stat_filtred)
+    min_date, max_date = min_max_date(df)
+    # To select only the data between min_date and max_date
+    df = df[df["Year"] >= min_date]
+    df = df[df["Year"] <= max_date]
+    return create_map_bubble_year(virus_name, metadata_file_stat_filtred, 2, min_date, max_date)
+
+
+@app.callback(
+    dash.dependencies.Output('curve-line-graph', 'figure'),
+    [dash.dependencies.Input('d_virus-name', 'value'),
+     dash.dependencies.Input('d_mumps', 'value'),
+     dash.dependencies.Input('d_dengue', 'value'),
+     dash.dependencies.Input('d_lassa', 'value'),
+     dash.dependencies.Input('d_avian_opt1', 'value'), dash.dependencies.Input('d_avian_opt2', 'value'),
+     dash.dependencies.Input('d_flu_opt1', 'value'), dash.dependencies.Input('d_flu_opt2', 'value'), dash.dependencies.Input('d_flu_opt3', 'value')])
+def _update_curve(virus_name, mumps, dengue, lassa, avian_opt1, avian_opt2, flu_opt1, flu_opt2, flu_opt3):
+    virus_name = virus_name.lower()
+    if virus_name == "ebola" or virus_name == "zika" or virus_name == "measles":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1="", level2="", level3="")
+    elif virus_name == "mumps":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=mumps, level2="", level3="")
+    elif virus_name == "dengue":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=dengue, level2="", level3="")
+    elif virus_name == "lassa":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=lassa, level2="", level3="")
+    elif virus_name == "avian":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=avian_opt1, level2=avian_opt2, level3="")
+    elif virus_name == "flu":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=flu_opt1, level2=flu_opt2, level3=flu_opt3)
+    df = pd.read_csv(metadata_file_stat_filtred)
+    min_date, max_date = min_max_date(df)
+    #To select only the data between min_date and max_date
+    df = df[df["Year"] >= min_date]
+    df = df[df["Year"] <= max_date]
+
+    return create_curve_line(df, virus_name, min_date, max_date)
 
 
 @app.callback(
     dash.dependencies.Output('id-histo', 'children'),
-    [dash.dependencies.Input('my-dropdown1', 'value'),
-     dash.dependencies.Input('my-dropdown2', 'value'),
-     dash.dependencies.Input('my-dropdown3', 'value'),
-     dash.dependencies.Input('my-dropdown4', 'value'),
-     dash.dependencies.Input('my-dropdown5', 'value'), dash.dependencies.Input('my-dropdown6', 'value'),
-     dash.dependencies.Input('my-dropdown7', 'value'), dash.dependencies.Input('my-dropdown8', 'value'), dash.dependencies.Input('my-dropdown9', 'value')])
+    [dash.dependencies.Input('d_virus-name', 'value'),
+     dash.dependencies.Input('d_mumps', 'value'),
+     dash.dependencies.Input('d_dengue', 'value'),
+     dash.dependencies.Input('d_lassa', 'value'),
+     dash.dependencies.Input('d_avian_opt1', 'value'), dash.dependencies.Input('d_avian_opt2', 'value'),
+     dash.dependencies.Input('d_flu_opt1', 'value'), dash.dependencies.Input('d_flu_opt2', 'value'), dash.dependencies.Input('d_flu_opt3', 'value')])
 def _update_histo(virus_name, mumps, dengue, lassa, avian_opt1, avian_opt2, flu_opt1, flu_opt2, flu_opt3):
-    df = []
+    virus_name = virus_name.lower()
     if virus_name == "ebola" or virus_name == "zika" or virus_name == "measles":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1="", level2="", level3="")
-        df = pd.read_csv(metadata_file_stat_filtred)
     elif virus_name == "mumps":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=mumps, level2="", level3="")
-        df = pd.read_csv(metadata_file_stat_filtred)
     elif virus_name == "dengue":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=dengue, level2="", level3="")
-        df = pd.read_csv(metadata_file_stat_filtred)
     elif virus_name == "lassa":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=lassa, level2="", level3="")
-        df = pd.read_csv(metadata_file_stat_filtred)
     elif virus_name == "avian":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=avian_opt1, level2=avian_opt2, level3="")
-        df = pd.read_csv(metadata_file_stat_filtred)
     elif virus_name == "flu":
         tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=flu_opt1, level2=flu_opt2, level3=flu_opt3)
-        df = pd.read_csv(metadata_file_stat_filtred)
+    df = pd.read_csv(metadata_file_stat_filtred)
+    min_date, max_date = min_max_date(df)
+    #To select only the data between min_date and max_date
+    df = df[df["Year"] >= min_date]
+    df = df[df["Year"] <= max_date]
+
+    # Count the number of viruses by Country
+    df_group_by_country = df.groupby(['Country'])['Value'].sum()
+    # Translate groupby object in dataframe
+    df_group_by_country = df_group_by_country.to_frame()
+    # Rename the first column in Value
+    df_group_by_country.columns = ['Value']
+    # Move the index values (i.e. Country column) in column and reset index
+    df_group_by_country = df_group_by_country.reset_index()
+
+
     return dcc.Graph(
             id='right-bottom-histo',
             figure={
                 'data': [{
-                    'x': df['name'],
-                    'y': df['pop'],
+                    'x': df_group_by_country['Country'],
+                    'y': df_group_by_country['Value'],
                     'type': 'bar'
                 }],
                 'layout': {
-                    'title': 'Distribution of {}'.format(virus_name)
+                    'paper_bgcolor':'rgba(0,0,0,0)',
+                    'plot_bgcolor':'rgba(0,0,0,0)',
+                    'autosize': True,
+                    'margin': '0px 0px 0px 0px',
+                    'title': '<br>Distribution of {} <br>Between {} and {}'.format(virus_name.title(), min_date, max_date)
                 }
             }
         )
 
 
+#@app.callback(
+#    dash.dependencies.Output('id-year', 'children'),
+#    [dash.dependencies.Input('d_virus-name', 'value'),
+#     dash.dependencies.Input('d_mumps', 'value'),
+#     dash.dependencies.Input('d_dengue', 'value'),
+#     dash.dependencies.Input('d_lassa', 'value'),
+#     dash.dependencies.Input('d_avian_opt1', 'value'), dash.dependencies.Input('d_avian_opt2', 'value'),
+#     dash.dependencies.Input('d_flu_opt1', 'value'), dash.dependencies.Input('d_flu_opt2', 'value'), dash.dependencies.Input('d_flu_opt3', 'value')])
+#def _update_slicer(virus_name, mumps, dengue, lassa, avian_opt1, avian_opt2, flu_opt1, flu_opt2, flu_opt3):
+#    virus_name = virus_name.lower()
+#    if virus_name == "ebola" or virus_name == "zika" or virus_name == "measles":
+#        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1="", level2="", level3="")
+#    elif virus_name == "mumps":
+#        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=mumps, level2="", level3="")
+#    elif virus_name == "dengue":
+#        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=dengue, level2="", level3="")
+#    elif virus_name == "lassa":
+#        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=lassa, level2="", level3="")
+#    elif virus_name == "avian":
+#        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=avian_opt1, level2=avian_opt2, level3="")
+#    elif virus_name == "flu":
+#        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=flu_opt1, level2=flu_opt2, level3=flu_opt3)
+#    df = pd.read_csv(metadata_file_stat_filtred)
+#    min_date, max_date = min_max_date(df)
+#    marks_data = slicer(min_date, max_date)
+#    return dcc.RangeSlider(
+#        min=min_date,
+#        max=max_date,
+#        step=None,
+#        marks=marks_data,
+#        value=[min_date, max_date]
+#    ),
+
+
+@app.callback(
+    dash.dependencies.Output('id-year', 'min'),
+    [dash.dependencies.Input('d_virus-name', 'value'),
+     dash.dependencies.Input('d_mumps', 'value'),
+     dash.dependencies.Input('d_dengue', 'value'),
+     dash.dependencies.Input('d_lassa', 'value'),
+     dash.dependencies.Input('d_avian_opt1', 'value'), dash.dependencies.Input('d_avian_opt2', 'value'),
+     dash.dependencies.Input('d_flu_opt1', 'value'), dash.dependencies.Input('d_flu_opt2', 'value'), dash.dependencies.Input('d_flu_opt3', 'value')])
+def _update_min_slicer(virus_name, mumps, dengue, lassa, avian_opt1, avian_opt2, flu_opt1, flu_opt2, flu_opt3):
+    virus_name = virus_name.lower()
+    if virus_name == "ebola" or virus_name == "zika" or virus_name == "measles":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1="", level2="", level3="")
+    elif virus_name == "mumps":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=mumps, level2="", level3="")
+    elif virus_name == "dengue":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=dengue, level2="", level3="")
+    elif virus_name == "lassa":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=lassa, level2="", level3="")
+    elif virus_name == "avian":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=avian_opt1, level2=avian_opt2, level3="")
+    elif virus_name == "flu":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=flu_opt1, level2=flu_opt2, level3=flu_opt3)
+    df = pd.read_csv(metadata_file_stat_filtred)
+    min_date, max_date = min_max_date(df)
+    marks_data = slicer(min_date, max_date)
+    min_max_date_value = [min_date, max_date]
+    return min_date
+
+
+@app.callback(
+    dash.dependencies.Output('id-year', 'max'),
+    [dash.dependencies.Input('d_virus-name', 'value'),
+     dash.dependencies.Input('d_mumps', 'value'),
+     dash.dependencies.Input('d_dengue', 'value'),
+     dash.dependencies.Input('d_lassa', 'value'),
+     dash.dependencies.Input('d_avian_opt1', 'value'), dash.dependencies.Input('d_avian_opt2', 'value'),
+     dash.dependencies.Input('d_flu_opt1', 'value'), dash.dependencies.Input('d_flu_opt2', 'value'), dash.dependencies.Input('d_flu_opt3', 'value')])
+def _update_max_slicer(virus_name, mumps, dengue, lassa, avian_opt1, avian_opt2, flu_opt1, flu_opt2, flu_opt3):
+    virus_name = virus_name.lower()
+    if virus_name == "ebola" or virus_name == "zika" or virus_name == "measles":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1="", level2="", level3="")
+    elif virus_name == "mumps":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=mumps, level2="", level3="")
+    elif virus_name == "dengue":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=dengue, level2="", level3="")
+    elif virus_name == "lassa":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=lassa, level2="", level3="")
+    elif virus_name == "avian":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=avian_opt1, level2=avian_opt2, level3="")
+    elif virus_name == "flu":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=flu_opt1, level2=flu_opt2, level3=flu_opt3)
+    df = pd.read_csv(metadata_file_stat_filtred)
+    min_date, max_date = min_max_date(df)
+    marks_data = slicer(min_date, max_date)
+    min_max_date_value = [min_date, max_date]
+    return max_date
+
+
+@app.callback(
+    dash.dependencies.Output('id-year', 'marks'),
+    [dash.dependencies.Input('d_virus-name', 'value'),
+     dash.dependencies.Input('d_mumps', 'value'),
+     dash.dependencies.Input('d_dengue', 'value'),
+     dash.dependencies.Input('d_lassa', 'value'),
+     dash.dependencies.Input('d_avian_opt1', 'value'), dash.dependencies.Input('d_avian_opt2', 'value'),
+     dash.dependencies.Input('d_flu_opt1', 'value'), dash.dependencies.Input('d_flu_opt2', 'value'), dash.dependencies.Input('d_flu_opt3', 'value')])
+def _update_marks_slicer(virus_name, mumps, dengue, lassa, avian_opt1, avian_opt2, flu_opt1, flu_opt2, flu_opt3):
+    virus_name = virus_name.lower()
+    if virus_name == "ebola" or virus_name == "zika" or virus_name == "measles":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1="", level2="", level3="")
+    elif virus_name == "mumps":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=mumps, level2="", level3="")
+    elif virus_name == "dengue":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=dengue, level2="", level3="")
+    elif virus_name == "lassa":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=lassa, level2="", level3="")
+    elif virus_name == "avian":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=avian_opt1, level2=avian_opt2, level3="")
+    elif virus_name == "flu":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=flu_opt1, level2=flu_opt2, level3=flu_opt3)
+    df = pd.read_csv(metadata_file_stat_filtred)
+    min_date, max_date = min_max_date(df)
+    marks_data = slicer(min_date, max_date)
+    min_max_date_value = [min_date, max_date]
+    return marks_data
+
+
+@app.callback(
+    dash.dependencies.Output('id-year', 'value'),
+    [dash.dependencies.Input('d_virus-name', 'value'),
+     dash.dependencies.Input('d_mumps', 'value'),
+     dash.dependencies.Input('d_dengue', 'value'),
+     dash.dependencies.Input('d_lassa', 'value'),
+     dash.dependencies.Input('d_avian_opt1', 'value'), dash.dependencies.Input('d_avian_opt2', 'value'),
+     dash.dependencies.Input('d_flu_opt1', 'value'), dash.dependencies.Input('d_flu_opt2', 'value'), dash.dependencies.Input('d_flu_opt3', 'value')])
+def _update_value_slicer(virus_name, mumps, dengue, lassa, avian_opt1, avian_opt2, flu_opt1, flu_opt2, flu_opt3):
+    virus_name = virus_name.lower()
+    if virus_name == "ebola" or virus_name == "zika" or virus_name == "measles":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1="", level2="", level3="")
+    elif virus_name == "mumps":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=mumps, level2="", level3="")
+    elif virus_name == "dengue":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=dengue, level2="", level3="")
+    elif virus_name == "lassa":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=lassa, level2="", level3="")
+    elif virus_name == "avian":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=avian_opt1, level2=avian_opt2, level3="")
+    elif virus_name == "flu":
+        tree_file_filtred, metadata_file_filtred, metadata_file_stat_filtred = create_paths_file(virus_name, level1=flu_opt1, level2=flu_opt2, level3=flu_opt3)
+    df = pd.read_csv(metadata_file_stat_filtred)
+    min_date, max_date = min_max_date(df)
+    marks_data = slicer(min_date, max_date)
+    min_max_date_value = [min_date, max_date]
+    return min_max_date_value
+
+
+#@app.callback(
+#    dash.dependencies.Output('id-year', 'children'),
+#    [dash.dependencies.Input('output-container-range-slider', 'children')])
+#def _update_slicer(dates):
+#    print(dates)
+#    return dcc.RangeSlider(
+#        min=1980,
+#        max=2010,
+#        step=None,
+#        marks=[1980,1990,2000,2010],
+#        value=[min_date, max_date]
+#    ),
+
+
+#@app.callback(
+#    dash.dependencies.Output('output-container-range-slider', 'children'),
+#    [dash.dependencies.Input('id-year', 'children')])
+#def _update_output(info):
+#    return 'You have selected the dates between {} and {}'.format(info[0]["props"]["value"][0], info[0]["props"]["value"][1])
+
+
+######################################### CSS #########################################
+external_css = [
+    "https://cdnjs.cloudflare.com/ajax/libs/normalize/7.0.0/normalize.min.css",  # Normalize the CSS
+    "https://fonts.googleapis.com/css?family=Open+Sans|Roboto"  # Fonts
+    "https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css",
+    "https://cdn.rawgit.com/xhlulu/dash-object-detection/master/stylesheet.css"
+]
+
+for css in external_css:
+    app.css.append_css({"external_url": css})
+
+
+# Running the server
 if __name__ == '__main__':
-    app.run_server(debug=True, port=5557)
+    app.run_server(debug=True, port=8050)
