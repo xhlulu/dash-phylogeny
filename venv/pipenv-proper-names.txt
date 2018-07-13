@@ -1,8 +1,0 @@
-dash_renderer
-Flask
-Flask-Compress
-ipython_genutils
-Jinja2
-jupyter_core
-MarkupSafe
-Werkzeug
