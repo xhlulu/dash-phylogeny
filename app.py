@@ -1497,7 +1497,7 @@ external_css = [
     "https://cdnjs.cloudflare.com/ajax/libs/normalize/7.0.0/normalize.min.css",  # Normalize the CSS
     "https://fonts.googleapis.com/css?family=Open+Sans|Roboto"  # Fonts
     "https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css",
-    "https://cdn.rawgit.com/TahiriNadia/styles/8739323e/base-styles.css",
+    "https://cdn.rawgit.com/TahiriNadia/styles/ea9aae69/stylesheet.css",
     "https://cdn.rawgit.com/plotly/dash-object-detection/875fdd6b/custom-styles.css"
 ]
 
