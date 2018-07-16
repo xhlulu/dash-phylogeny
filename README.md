@@ -7,7 +7,7 @@ Dash abstracts away all of the technologies and protocols required to build an i
 To learn more check out our [documentation](https://plot.ly/dash).
 
 ## Introduction
-In this area, include a brief description of what the application does, and include a link to the [Heroku application](https://dash-app-phylogenetic.herokuapp.com/).
+In this area, include a brief description of what the application does, and include a link to the [Heroku application](https://dash-phylogeny.herokuapp.com/).
 
 ### [Technique/field associated with the instrument]
 Give a brief description of the scientific background related to the application that you're interfacing with.
