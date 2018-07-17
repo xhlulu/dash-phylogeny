@@ -1490,8 +1490,8 @@ external_css = [
     "https://cdnjs.cloudflare.com/ajax/libs/normalize/7.0.0/normalize.min.css",  # Normalize the CSS
     "https://fonts.googleapis.com/css?family=Open+Sans|Roboto"  # Fonts
     "https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css",
-    "css/stylesheet.css",
-    "https://cdn.rawgit.com/plotly/dash-object-detection/875fdd6b/custom-styles.css"
+    "https://cdn.rawgit.com/TahiriNadia/styles/faf8c1c3/stylesheet.css",
+    "https://cdn.rawgit.com/TahiriNadia/styles/b1026938/custum-styles_phyloapp.css"
 ]
 
 for css in external_css:
