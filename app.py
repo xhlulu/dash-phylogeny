@@ -919,13 +919,6 @@ def serve_layout():
                                             ),
                                         ]),
                                         html.Br(),
-                                        html.H6(children='Color by'),
-                                        dcc.Dropdown(
-                                            id='my-dropdown10',
-                                            options=[{'label': i, 'value': i} for i in ['Division', 'Country', 'Date']],
-                                            value='Country',
-                                        ),
-                                        html.Br(),
                                         html.Br(),
                                         html.H6(children='Data Range'),
                                         dcc.RangeSlider(
@@ -1056,10 +1049,10 @@ def _update_output(virus_name):
      dash.dependencies.Input('d_lassa', 'value'),
      dash.dependencies.Input('d_avian_opt1', 'value'), dash.dependencies.Input('d_avian_opt2', 'value'),
      dash.dependencies.Input('d_flu_opt1', 'value'), dash.dependencies.Input('d_flu_opt2', 'value'),
-     dash.dependencies.Input('d_flu_opt3', 'value'),
-     dash.dependencies.Input('my-dropdown10', 'value')])
-def _update_fig(virus_name, mumps, dengue, lassa, avian_opt1, avian_opt2, flu_opt1, flu_opt2, flu_opt3, ord_by_elt):
+     dash.dependencies.Input('d_flu_opt3', 'value')])
+def _update_fig(virus_name, mumps, dengue, lassa, avian_opt1, avian_opt2, flu_opt1, flu_opt2, flu_opt3):
     virus_name = virus_name.lower()
+    ord_by_elt = "Country"
     data_virus_info = {}
     if virus_name == "ebola" or virus_name == "zika" or virus_name == "measles":
         data_virus_info = {"virus_name": virus_name, "level1": "", "level2": "", "level3": ""}
@@ -1497,7 +1490,7 @@ external_css = [
     "https://cdnjs.cloudflare.com/ajax/libs/normalize/7.0.0/normalize.min.css",  # Normalize the CSS
     "https://fonts.googleapis.com/css?family=Open+Sans|Roboto"  # Fonts
     "https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css",
-    "https://cdn.rawgit.com/TahiriNadia/styles/8ee3f376/stylesheet.css",
+    "css/stylesheet.css",
     "https://cdn.rawgit.com/plotly/dash-object-detection/875fdd6b/custom-styles.css"
 ]
 
