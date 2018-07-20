@@ -18,18 +18,17 @@ Give a brief description of the scientific background related to the application
 - The commands to run that will set up this app and get it ready to run : >python3.6 app.py
 
 ## How to use the app
-Here, you should put the command needed to run your app, and then the steps that the user should take to use it. You should include screenshots of the app running in your own browser to make it easier to follow along.
+The command needed to run the app:
+python3.6 app.py
 
-Then, show a step-by-step guide of how your app works, and what each control does.
-
-If possible, include screenshots of something in the app failing, and, if any, the steps that the user can take to correct the error.
-
-### Controls
-Here, provide a list of all of your controls and a description of what they do.
+In the web page, you can select the bacteria, and the genes in depends on the bacteria.
 
 
 ## Resources
-If necessary, include resources like documentation for your app, or the pages associated with any external packages used in the project.
+
+External packages used in the project:
+- biopython (https://biopython.org/wiki/Documentation)
+- nominatim (https://geopy.readthedocs.io/en/stable/)
 
 ## Screenshots
 The following are screenshots for the app in this repo:
