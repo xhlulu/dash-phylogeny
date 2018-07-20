@@ -1498,6 +1498,7 @@ for css in external_css:
     app.css.append_css({"external_url": css})
 
 
-# Running the server 
+
+# Running the server
 if __name__ == '__main__':
     app.run_server(debug=True, port=8050)
